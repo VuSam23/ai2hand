@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { handlePromoAction } from "./promos.ts";
+import { handleManualAction } from "./manual.ts";
 import { buildCorsHeaders, jsonCorsResponse } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -253,6 +254,9 @@ serve(async (req) => {
 
     const promoRes = await handlePromoAction(action, payload, SUPABASE_URL, svcHeaders, jsonRes);
     if (promoRes) return promoRes;
+
+    const manualRes = await handleManualAction(action, payload, SUPABASE_URL, svcHeaders, jsonRes);
+    if (manualRes) return manualRes;
 
     return jsonRes({ ok: false, error: `Unknown action: ${action}` }, 400);
   } catch (err) {

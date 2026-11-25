@@ -87,28 +87,39 @@ serve(async (req) => {
       return jsonRes({ ok: false, error: "Gói sản phẩm không tồn tại hoặc đang tạm ẩn." }, 404);
     }
 
+    const variantKey = `${duration}|${accountType}`;
     const vp = product.variant_prices && typeof product.variant_prices === "object" ? product.variant_prices : {};
-    const variantPrice = Number(vp[`${duration}|${accountType}`] || 0);
+    const variantPrice = Number(vp[variantKey] || 0);
     const unitPrice = variantPrice >= 1000 ? variantPrice : Math.round(Number(product.price) || 0);
     if (unitPrice < 1000) {
       return jsonRes({ ok: false, error: "Biến thể sản phẩm chưa được cấu hình giá hợp lệ." }, 400);
     }
 
-    const keyRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/inventory_keys?product_id=eq.${encodeURIComponent(productId)}&is_sold=eq.false&select=duration,account_type`,
-      { headers: svcHeaders }
-    );
-    const keyRows = await keyRes.json();
-    const availStock = Array.isArray(keyRows)
-      ? keyRows.filter(
-          (k) =>
-            ((k.duration || "1 Tháng") === duration && (k.account_type || "Tài khoản riêng") === accountType) ||
-            k.duration == null ||
-            k.account_type == null
-        ).length
-      : 0;
-    if (availStock < qty) {
-      return jsonRes({ ok: false, error: `Số lượng vượt quá tồn kho (${availStock}).` }, 400);
+    const manualMap = product.manual_stocks && typeof product.manual_stocks === "object" ? product.manual_stocks : {};
+    const manualStock = Math.max(0, Math.round(Number(manualMap[variantKey]) || 0));
+    const isManual = manualStock > 0;
+
+    if (isManual) {
+      if (manualStock < qty) {
+        return jsonRes({ ok: false, error: `Số lượng vượt quá suất cấp thủ công (${manualStock}).` }, 400);
+      }
+    } else {
+      const keyRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/inventory_keys?product_id=eq.${encodeURIComponent(productId)}&is_sold=eq.false&select=duration,account_type`,
+        { headers: svcHeaders }
+      );
+      const keyRows = await keyRes.json();
+      const availStock = Array.isArray(keyRows)
+        ? keyRows.filter(
+            (k) =>
+              ((k.duration || "1 Tháng") === duration && (k.account_type || "Tài khoản riêng") === accountType) ||
+              k.duration == null ||
+              k.account_type == null
+          ).length
+        : 0;
+      if (availStock < qty) {
+        return jsonRes({ ok: false, error: `Số lượng vượt quá tồn kho (${availStock}).` }, 400);
+      }
     }
 
     let promo: Record<string, unknown> | null = null;
@@ -161,6 +172,7 @@ serve(async (req) => {
       contact,
       amount: totalAmount,
       traffic_source: trafficSource || "Direct",
+      is_manual: isManual,
       status: "pending",
     };
 

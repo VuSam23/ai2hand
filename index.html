@@ -416,7 +416,7 @@
 
           <div class="detail-specs-box">
             <div><span>Thời hạn gói:</span> <strong id="hero-duration">1 Tháng</strong></div>
-            <div><span>Hình thức giao:</span> <strong>Tự động qua Web &amp; Lưu lịch sử</strong></div>
+            <div><span>Hình thức giao:</span> <strong id="detail-delivery-method">Tự động qua Web &amp; Lưu lịch sử</strong></div>
           </div>
 
           <div class="hero-actions" id="detail-sticky-bar">
@@ -1003,8 +1003,17 @@
           </div>
 
           <div class="form-group" id="checkout-variant-wrap" hidden>
-            <label for="checkout-variant-select">Chọn gói tài khoản</label>
-            <select id="checkout-variant-select" class="form-input"></select>
+            <div class="checkout-variant-grid">
+              <div>
+                <label for="checkout-duration-select">Thời hạn</label>
+                <select id="checkout-duration-select" class="form-input"></select>
+              </div>
+              <div>
+                <label for="checkout-account-type-select">Loại tài khoản</label>
+                <select id="checkout-account-type-select" class="form-input"></select>
+              </div>
+            </div>
+            <select id="checkout-variant-select" class="form-input" hidden></select>
           </div>
 
           <div class="form-group">
@@ -1031,6 +1040,7 @@
               required
             />
             <p class="form-hint is-error" id="checkout-contact-error" hidden></p>
+            <p class="form-hint" id="checkout-delivery-note" style="color:#0369a1;margin-top:0.35rem;font-weight:600;" hidden></p>
             <p class="form-hint" style="color:#b45309;margin-top:0.35rem;">⚠️ Lưu ý: Vui lòng kiểm tra kỹ Email / SĐT Zalo trước khi thanh toán. Hệ thống gửi tự động theo thông tin bạn nhập, mọi trường hợp nhập sai dẫn đến thất lạc tài khoản Shop xin phép miễn trừ trách nhiệm.</p>
           </div>
 

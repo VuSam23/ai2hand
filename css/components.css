@@ -102,6 +102,8 @@
 .checkout-total-bar { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1rem; background: var(--color-surface-low); border-radius: var(--radius-sm); }
 .checkout-total-bar strong { font-size: 1.25rem; color: var(--color-primary); }
 .voucher-row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; }
+.checkout-variant-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+@media (max-width: 480px) { .checkout-variant-grid { grid-template-columns: 1fr; } }
 .voucher-note { margin: 0; font-size: 0.75rem; font-weight: 700; color: var(--color-secondary); }
 .voucher-note.is-error { color: var(--color-error); }
 

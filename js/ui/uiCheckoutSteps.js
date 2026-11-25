@@ -2,26 +2,39 @@
  * js/ui/uiCheckoutSteps.js — Tầng 3: Render trạng thái Modal VietQR 3 bước & Đếm ngược
  */
 import { VIETQR_CONFIG, ACCOUNT_TYPES, isSupabaseConfigured } from '../config/config.js';
-import { stopOrderPolling, getVariantStock } from '../services/supabaseApi.js';
+import { stopOrderPolling, getVariantStock, isVariantManual } from '../services/supabaseApi.js';
 import { readSession } from '../services/authRefresh.js';
 import { calculatePromoDiscount } from '../services/promoApi.js';
-import { formatVnd, showToast } from './uiCommon.js';
+import { formatVnd, escapeHtml, showToast } from './uiCommon.js';
 
 let qrTimerInterval = null;
 
+export function resolveCheckoutVariant(product, label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label) {
+  const key = `${label}|${accountType}`;
+  const customPrice = Number(product?.variantPrices?.[key] || 0);
+  const price = customPrice >= 1000 ? customPrice : Number(product?.price) || 0;
+  const stock = getVariantStock(product, label, accountType);
+  const isManual = isVariantManual(product, label, accountType);
+  return { key, label, accountType, price, stock, isManual };
+}
+
 function buildCheckoutVariants(product) {
-  const entries = Object.entries(product?.variantPrices || {})
-    .map(([key, rawPrice]) => {
-      const price = Number(rawPrice) || 0;
-      if (price < 1000) return null;
+  const allKeys = [
+    ...new Set([
+      ...Object.keys(product?.variantPrices || {}),
+      ...Object.keys(product?.variantStocks || {}),
+      ...Object.keys(product?.manualStocks || {}),
+    ]),
+  ];
+  const entries = allKeys
+    .map((key) => {
       const [label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label] = key.split('|');
-      return { key, label, accountType, price, stock: getVariantStock(product, label, accountType) };
+      const v = resolveCheckoutVariant(product, label, accountType);
+      return v.price >= 1000 ? v : null;
     })
     .filter(Boolean);
   if (entries.length > 0) return entries;
-  const label = product?.duration || '1 Tháng';
-  const accountType = ACCOUNT_TYPES[0].label;
-  return [{ key: `${label}|${accountType}`, label, accountType, price: Number(product?.price) || 0, stock: Number(product?.stock) || 0 }];
+  return [resolveCheckoutVariant(product, product?.duration || '1 Tháng', ACCOUNT_TYPES[0].label)];
 }
 
 export function syncQtyControls(qty, availStock) {
@@ -38,8 +51,23 @@ export function syncCheckoutVariantUi(state, variantObj) {
   const availStock = Number(variantObj.stock) || 0;
   document.getElementById('checkout-product-name').textContent =
     `${state.checkoutProduct.name} • ${variantObj.label} (${variantObj.accountType})`;
-  document.getElementById('checkout-product-stock').textContent = `Còn lại: ${availStock} tài khoản`;
+  const stockEl = document.getElementById('checkout-product-stock');
+  stockEl.textContent =
+    availStock === 0
+      ? 'Hết hàng'
+      : variantObj.isManual
+        ? `Còn lại: ${availStock} suất (Cấp thủ công)`
+        : `Còn lại: ${availStock} tài khoản`;
   document.getElementById('checkout-unit-price').textContent = formatVnd(variantObj.price);
+
+  const deliveryNote = document.getElementById('checkout-delivery-note');
+  if (deliveryNote) {
+    deliveryNote.hidden = !variantObj.isManual;
+    if (variantObj.isManual) {
+      deliveryNote.textContent =
+        'Đây là gói cấp thủ công — Vui lòng để lại chính xác Email hoặc SĐT Zalo để Admin liên hệ cấp tài khoản sau khi hoàn tất thanh toán.';
+    }
+  }
 
   const qtyInput = document.getElementById('checkout-qty');
   const nextQty = availStock > 0 ? 1 : 0;
@@ -49,7 +77,7 @@ export function syncCheckoutVariantUi(state, variantObj) {
   }
   syncQtyControls(nextQty, availStock);
   const createBtn = document.getElementById('checkout-create-btn');
-  if (createBtn) createBtn.disabled = availStock === 0;
+  if (createBtn) createBtn.disabled = availStock === 0 || variantObj.price < 1000;
   updateCheckoutPriceUi(state);
 }
 
@@ -109,16 +137,18 @@ export function openCheckoutModal(state, product, variantOverride = null) {
     variants[0];
 
   const varWrap = document.getElementById('checkout-variant-wrap');
-  const varSelect = document.getElementById('checkout-variant-select');
-  if (varWrap) varWrap.hidden = variants.length <= 1;
-  if (varSelect) {
-    varSelect.innerHTML = variants
-      .map(
-        (v) =>
-          `<option value="${v.key}">${v.label} • ${v.accountType} — ${formatVnd(v.price)} (Còn ${v.stock})</option>`
-      )
-      .join('');
-    varSelect.value = matched.key;
+  const durSelect = document.getElementById('checkout-duration-select');
+  const typeSelect = document.getElementById('checkout-account-type-select');
+  const durations = [...new Set(variants.map((v) => v.label))];
+  const accountTypes = [...new Set(variants.map((v) => v.accountType))];
+  if (varWrap) varWrap.hidden = variants.length === 0;
+  if (durSelect) {
+    durSelect.innerHTML = durations.map((d) => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+    durSelect.value = matched.label;
+  }
+  if (typeSelect) {
+    typeSelect.innerHTML = accountTypes.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+    typeSelect.value = matched.accountType;
   }
   syncCheckoutVariantUi(state, matched);
 
@@ -232,7 +262,14 @@ export function renderDeliveredStep(order) {
     clearInterval(qrTimerInterval);
     qrTimerInterval = null;
   }
+  const isManualPending = String(order.status || '').toUpperCase() === 'PENDING_MANUAL';
   document.getElementById('delivered-order-code').textContent = order.orderCode;
-  document.getElementById('delivered-credentials').textContent = order.credentials.join('\n');
+  document.getElementById('delivered-credentials').textContent = isManualPending
+    ? `Đã thanh toán thành công!\nĐơn hàng đang chờ Admin liên hệ qua Email / Zalo (${order.contact || 'đã đăng ký'}) để cấp tài khoản thủ công.`
+    : (order.credentials || []).join('\n');
+  const copyBtn = document.getElementById('copy-all-credentials-btn');
+  const dlBtn = document.getElementById('download-credentials-btn');
+  if (copyBtn) copyBtn.hidden = isManualPending;
+  if (dlBtn) dlBtn.hidden = isManualPending;
   switchModalStep('success');
 }

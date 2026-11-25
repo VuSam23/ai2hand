@@ -20,6 +20,8 @@ export function normalizeProduct(row, stockInfoMap = new Map()) {
   const isActive = row.is_active !== false;
   const info = stockInfoMap.get(id) || { total: 0, variants: {} };
   const variantPrices = row.variant_prices && typeof row.variant_prices === 'object' ? row.variant_prices : {};
+  const manualStocks = row.manual_stocks && typeof row.manual_stocks === 'object' ? row.manual_stocks : {};
+  const manualTotal = Object.values(manualStocks).reduce((sum, v) => sum + Math.max(0, Number(v) || 0), 0);
   return {
     id,
     name: row.name,
@@ -27,9 +29,10 @@ export function normalizeProduct(row, stockInfoMap = new Map()) {
     duration: '1 Tháng',
     price,
     strikePrice: Math.round(price * 1.3),
-    stock: isActive ? info.total : 0,
+    stock: isActive ? info.total + manualTotal : 0,
     variantStocks: isActive ? info.variants : {},
     variantPrices,
+    manualStocks: isActive ? manualStocks : {},
     imageUrl: String(row.image_url || '').trim(),
     isActive,
     emblem: String(row.name || 'AC').slice(0, 2).toUpperCase(),
@@ -38,11 +41,21 @@ export function normalizeProduct(row, stockInfoMap = new Map()) {
   };
 }
 
+export function isVariantManual(product, duration = '1 Tháng', accountType = 'Tài khoản riêng') {
+  if (!product || product.isActive === false) return false;
+  return Math.max(0, Number(product.manualStocks?.[`${duration}|${accountType}`] || 0)) > 0;
+}
+
 export function getVariantStock(product, duration = '1 Tháng', accountType = 'Tài khoản riêng') {
-  if (!product || product.isActive === false || product.stock === 0) return 0;
+  if (!product || product.isActive === false) return 0;
+  const key = `${duration}|${accountType}`;
+  const manualQty = Math.max(0, Number(product.manualStocks?.[key] || 0));
+  if (manualQty > 0) return manualQty;
+  if (product.stock === 0) return 0;
   const variants = product.variantStocks || {};
-  if (Object.keys(variants).length === 0) return product.stock;
-  return Number(variants[`${duration}|${accountType}`] || 0);
+  const hasVariantMap = Object.keys(variants).length > 0 || Object.keys(product.manualStocks || {}).length > 0;
+  if (!hasVariantMap) return product.stock;
+  return Number(variants[key] || 0);
 }
 
 export function buildPayosQrImgUrl(qrCode = '') {

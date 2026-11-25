@@ -22,6 +22,8 @@ ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS variant_prices jsonb NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS image_url text NOT NULL DEFAULT '';
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS manual_stocks jsonb NOT NULL DEFAULT '{}'::jsonb;
 
 CREATE TABLE IF NOT EXISTS public.inventory_keys (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -62,6 +64,8 @@ ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS traffic_source text NOT NULL DEFAULT 'Direct';
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS payos_order_code bigint UNIQUE;
+ALTER TABLE public.orders
+  ADD COLUMN IF NOT EXISTS is_manual boolean NOT NULL DEFAULT false;
 
 ALTER TABLE public.orders
   DROP CONSTRAINT IF EXISTS orders_status_check;
@@ -226,6 +230,55 @@ $$;
 
 REVOKE ALL ON FUNCTION public.fulfill_order(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.fulfill_order(text) TO service_role;
+
+-- 2.4. Hoàn tất đơn cấp thủ công theo biến thể (idempotent & trừ manual_stocks an toàn)
+CREATE OR REPLACE FUNCTION public.fulfill_manual_order(p_order_code text)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_order RECORD;
+  v_key   text;
+  v_qty   integer;
+BEGIN
+  SELECT * INTO v_order
+  FROM public.orders
+  WHERE order_code = p_order_code
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Không tìm thấy đơn hàng %', p_order_code;
+  END IF;
+
+  IF v_order.status IN ('pending_manual', 'paid') THEN
+    RETURN false;
+  END IF;
+
+  v_key := COALESCE(v_order.duration, '1 Tháng') || '|' || COALESCE(v_order.account_type, 'Tài khoản riêng');
+  v_qty := GREATEST(1, COALESCE(v_order.quantity, 1));
+
+  UPDATE public.products
+  SET manual_stocks = jsonb_set(
+    COALESCE(manual_stocks, '{}'::jsonb),
+    ARRAY[v_key],
+    to_jsonb(GREATEST(0, COALESCE((manual_stocks ->> v_key)::integer, 0) - v_qty)),
+    true
+  )
+  WHERE id = v_order.product_id;
+
+  UPDATE public.orders
+  SET status = 'pending_manual',
+      is_manual = true
+  WHERE order_code = v_order.order_code;
+
+  RETURN true;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.fulfill_manual_order(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.fulfill_manual_order(text) TO service_role;
 
 -- -----------------------------------------------------------------------------
 -- 3. ROW LEVEL SECURITY (RLS)

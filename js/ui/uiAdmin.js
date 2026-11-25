@@ -18,6 +18,7 @@ import {
 } from '../services/adminApi.js';
 import { showToast, copyText } from './uiCommon.js';
 import { renderAdminOrders, renderAdminPromos, renderAdminView, syncImportPriceInput, switchAdminTab } from './uiAdminRender.js';
+import { handleEditManualStock } from './uiAdminManual.js';
 
 export { renderAdminOrders, renderAdminPromos, renderAdminView, switchAdminTab };
 
@@ -153,6 +154,9 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
       }
       return;
     }
+
+    const editManualBtn = e.target.closest('[data-action="edit-manual-stock"]');
+    if (editManualBtn) return handleEditManualStock(editManualBtn, state, refreshCatalogUi);
 
     const toggleBtn = e.target.closest('[data-action="toggle-active"]');
     if (toggleBtn) {

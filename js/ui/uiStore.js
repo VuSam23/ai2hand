@@ -2,7 +2,7 @@
  * js/ui/uiStore.js — Render Trang chủ (#view-home) & Chi tiết sản phẩm (#view-product-detail)
  */
 import { CATEGORIES, DURATION_VARIANTS, ACCOUNT_TYPES } from '../config/config.js';
-import { getVariantStock } from '../services/supabaseApi.js';
+import { getVariantStock, isVariantManual } from '../services/supabaseApi.js';
 import { formatVnd, escapeHtml } from './uiCommon.js';
 
 function renderEmblemHtml(product) {
@@ -105,8 +105,17 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
 
   document.getElementById('detail-breadcrumb-cat').textContent = product.category;
   document.getElementById('detail-breadcrumb-name').textContent = product.name;
+  const isManual = isVariantManual(product, currentVariant.label, activeType.label);
   document.getElementById('hero-emblem').innerHTML = renderEmblemHtml(product);
-  document.getElementById('hero-tagline').textContent = product.tagline || product.duration;
+  document.getElementById('hero-tagline').textContent = isManual
+    ? `${product.category} • Cấp thủ công (Email / Zalo)`
+    : product.tagline || product.duration;
+  const deliveryEl = document.getElementById('detail-delivery-method');
+  if (deliveryEl) {
+    deliveryEl.textContent = isManual
+      ? 'Cấp thủ công • Admin giao key qua Email / Zalo sau khi thanh toán'
+      : 'Tự động qua Web & Lưu lịch sử';
+  }
   document.getElementById('hero-category').textContent = product.category;
   document.getElementById('hero-title').textContent = product.name;
   document.getElementById('hero-desc').textContent = product.description;
@@ -166,7 +175,11 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
 
   const stockEl = document.getElementById('hero-stock');
   const isEmpty = variantStock === 0;
-  stockEl.textContent = isEmpty ? 'Hết hàng' : `Còn ${variantStock} tài khoản`;
+  stockEl.textContent = isEmpty
+    ? 'Hết hàng'
+    : isManual
+      ? `Còn ${variantStock} suất (Cấp thủ công)`
+      : `Còn ${variantStock} tài khoản`;
   stockEl.classList.toggle('is-empty', isEmpty);
 
   const buyBtn = document.getElementById('hero-buy-btn');

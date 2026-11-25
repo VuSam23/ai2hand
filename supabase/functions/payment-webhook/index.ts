@@ -80,7 +80,32 @@ serve(async (req) => {
     if (order.status !== "pending") return jsonRes({ success: true, skipped: "Order not pending" }, 200);
     if (amount < Number(order.amount)) return jsonRes({ success: true, skipped: "Insufficient amount" }, 200);
 
-    // 4. Rút key & hoàn tất đơn hàng
+    // 4. Đơn cấp thủ công: chuyển pending_manual, trừ manual_stocks & báo Telegram Admin
+    if (order.is_manual) {
+      const manualRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fulfill_manual_order`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ p_order_code: order.order_code }),
+      });
+      if (!manualRes.ok) {
+        return jsonRes({ ok: false, error: await manualRes.text() }, 500);
+      }
+      const newlyMarked = await manualRes.json().catch(() => false);
+      if (newlyMarked === true) {
+        await sendTelegramAlert(
+          `[ĐƠN CẤP THỦ CÔNG - ĐÃ THANH TOÁN]\n` +
+            `Mã đơn: #${order.order_code}\n` +
+            `Sản phẩm: ${order.product_name || order.product_id}\n` +
+            `Biến thể: ${order.duration || "1 Tháng"} • ${order.account_type || "Tài khoản riêng"} (x${order.quantity || 1})\n` +
+            `Đã nhận: ${formatVnd(amount)}\n` +
+            `Nguồn: ${order.traffic_source || "Direct"}\n` +
+            `Email / Zalo khách nhận: ${order.contact || "Không rõ"}`
+        );
+      }
+      return jsonRes({ success: true, status: "pending_manual", orderCode: order.order_code }, 200);
+    }
+
+    // 5. Rút key tự động & hoàn tất đơn hàng
     const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fulfill_order`, {
       method: "POST",
       headers,

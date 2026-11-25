@@ -21,6 +21,7 @@ import {
   renderDeliveredStep,
   syncQtyControls,
   syncCheckoutVariantUi,
+  resolveCheckoutVariant,
 } from './uiCheckoutSteps.js';
 
 export {
@@ -68,14 +69,21 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
     adjustQty((Number.parseInt(qtyInput?.value, 10) || 1) + 1);
   });
 
-  document.getElementById('checkout-variant-select')?.addEventListener('change', async (e) => {
-    const chosen = (state.checkoutVariants || []).find((v) => v.key === e.target.value);
-    if (!chosen) return;
+  const handleVariantChange = async () => {
+    if (!state.checkoutProduct) return;
+    const dur = document.getElementById('checkout-duration-select')?.value || '1 Tháng';
+    const type = document.getElementById('checkout-account-type-select')?.value || 'Tài khoản riêng';
+    const chosen = resolveCheckoutVariant(state.checkoutProduct, dur, type);
     syncCheckoutVariantUi(state, chosen);
     if (state.activeVoucher) {
       const noteEl = document.getElementById('checkout-discount-note');
       try {
         await validatePromoCode(state.activeVoucher.code, state.checkoutProduct?.id, chosen.label);
+        if (noteEl) {
+          noteEl.hidden = false;
+          noteEl.textContent = `Đã áp dụng ${state.activeVoucher.code}: ${state.activeVoucher.label}!`;
+          noteEl.classList.remove('is-error');
+        }
       } catch (err) {
         state.activeVoucher = null;
         if (noteEl) {
@@ -83,10 +91,12 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
           noteEl.textContent = err.message || 'Mã giảm giá không áp dụng cho gói vừa chọn.';
           noteEl.classList.add('is-error');
         }
-        updateCheckoutPriceUi(state);
       }
+      updateCheckoutPriceUi(state);
     }
-  });
+  };
+  document.getElementById('checkout-duration-select')?.addEventListener('change', handleVariantChange);
+  document.getElementById('checkout-account-type-select')?.addEventListener('change', handleVariantChange);
 
   document.getElementById('checkout-voucher-btn')?.addEventListener('click', async () => {
     const code = document.getElementById('checkout-voucher-input')?.value.trim().toUpperCase() || '';
@@ -123,12 +133,11 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
     state.products = await fetchProducts();
     refreshCatalogUi();
     await refreshAccountData();
+    renderDeliveredStep(completedOrder);
     if (completedOrder.status === 'PENDING_MANUAL') {
-      closeCheckoutModal();
-      showToast(`Đơn ${completedOrder.orderCode} đã nhận tiền. Kho vừa hết key, Admin sẽ cấp thủ công ngay!`, 'info');
+      showToast(`Đơn ${completedOrder.orderCode} đã thanh toán! Admin sẽ liên hệ qua Email/Zalo để cấp key.`, 'info');
       return;
     }
-    renderDeliveredStep(completedOrder);
     showToast(`Đơn ${completedOrder.orderCode} đã thanh toán thành công!`, 'success');
   };
 

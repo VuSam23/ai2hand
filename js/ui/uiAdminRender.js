@@ -48,7 +48,10 @@ export function renderAdminOrders(orders = []) {
       const duration = o.duration || '1 Tháng';
       const accountType = o.account_type || o.accountType || 'Tài khoản riêng';
       const amount = o.amount ?? o.totalAmount ?? 0;
-      const isPaid = String(o.status || 'pending').toLowerCase() === 'paid';
+      const statusVal = String(o.status || 'pending').toLowerCase();
+      const isPaid = statusVal === 'paid';
+      const isManual = statusVal === 'pending_manual';
+      const statusText = isPaid ? 'Đã giao tự động' : isManual ? 'Chờ cấp thủ công' : 'Chờ thanh toán';
       const cred = o.delivered_credential || '';
       return `
         <div class="admin-stock-row">
@@ -57,7 +60,7 @@ export function renderAdminOrders(orders = []) {
             <div class="section-subtitle">${escapeHtml(duration)} • ${escapeHtml(accountType)} • ${escapeHtml(o.contact)} • ${formatVnd(amount)}</div>
           </div>
           <div class="admin-stock-controls">
-            <span class="card-stock ${isPaid ? '' : 'is-low'}">${isPaid ? 'Đã giao tự động' : 'Chờ thanh toán'}</span>
+            <span class="card-stock ${isPaid ? '' : 'is-low'}">${statusText}</span>
             ${isPaid && cred ? `<button type="button" class="copy-btn" data-copy-raw="${escapeHtml(cred)}">Copy key</button>` : ''}
           </div>
         </div>
@@ -147,19 +150,23 @@ export function renderAdminView(products, orders = null, promos = null) {
         const stockClass = p.stock === 0 ? 'is-empty' : p.stock <= 5 ? 'is-low' : '';
         const vp = p.variantPrices || {};
         const vs = p.variantStocks || {};
-        const allKeys = [...new Set([...Object.keys(vp), ...Object.keys(vs)])];
+        const ms = p.manualStocks || {};
+        const allKeys = [...new Set([...Object.keys(vp), ...Object.keys(vs), ...Object.keys(ms)])];
         const variantHtml =
           allKeys.length > 0
             ? allKeys
                 .map((key) => {
                   const [dur = '1 Tháng', type = 'Tài khoản riêng'] = key.split('|');
                   const qty = Number(vs[key] || 0);
+                  const manualQty = Math.max(0, Number(ms[key] || 0));
                   const customPrice = Number(vp[key] || 0);
                   const priceText = customPrice >= 1000 ? formatVnd(customPrice) : 'Giá mặc định';
+                  const manualBadge = manualQty > 0 ? ` • Thủ công: ${manualQty}` : '';
                   return `
                     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem;font-size:0.8rem;">
-                      <span class="card-stock ${qty === 0 ? 'is-empty' : qty <= 2 ? 'is-low' : ''}">${escapeHtml(dur)} • ${escapeHtml(type)}: ${qty} key (${priceText})</span>
+                      <span class="card-stock ${qty === 0 && manualQty === 0 ? 'is-empty' : qty + manualQty <= 2 ? 'is-low' : ''}">${escapeHtml(dur)} • ${escapeHtml(type)}: ${qty} key${manualBadge} (${priceText})</span>
                       <button type="button" class="copy-btn" data-action="edit-variant-price" data-id="${escapeHtml(p.id)}" data-variant-key="${escapeHtml(key)}" data-price="${customPrice || p.price}">Sửa giá</button>
+                      <button type="button" class="copy-btn" data-action="edit-manual-stock" data-id="${escapeHtml(p.id)}" data-variant-key="${escapeHtml(key)}" data-manual-stock="${manualQty}">Cấp thủ công</button>
                       <button type="button" class="copy-btn" data-action="quick-import" data-id="${escapeHtml(p.id)}" data-duration="${escapeHtml(dur)}" data-account-type="${escapeHtml(type)}">+ Nạp</button>
                     </div>`;
                 })
