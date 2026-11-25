@@ -13,20 +13,31 @@ function renderEmblemHtml(product) {
 }
 
 export function getCheapestVariant(product) {
-  const candidates = Object.entries(product?.variantPrices || {})
-    .map(([key, rawPrice]) => {
-      const price = Number(rawPrice) || 0;
-      if (price < 1000) return null;
+  const allKeys = [
+    ...new Set([
+      ...Object.keys(product?.variantPrices || {}),
+      ...Object.keys(product?.variantStocks || {}),
+      ...Object.keys(product?.manualStocks || {}),
+    ]),
+  ];
+  const candidates = allKeys
+    .map((key) => {
       const [label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label] = key.split('|');
+      const customPrice = Number(product?.variantPrices?.[key] || 0);
+      const price = customPrice >= 1000 ? customPrice : Number(product?.price) || 0;
+      if (price < 1000) return null;
       const vIdx = Math.max(0, DURATION_VARIANTS.findIndex((d) => d.label === label));
       const tObj = ACCOUNT_TYPES.find((t) => t.label === accountType) || ACCOUNT_TYPES[0];
+      const months = Math.max(1, Number.parseInt(label, 10) || 1);
+      const base1M = Number(product?.variantPrices?.[`1 Tháng|${tObj.label}`] || 0);
+      const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
       return {
         label,
         accountType: tObj.label,
         accountTypeId: tObj.id,
         variantIndex: vIdx,
         price,
-        strike: Math.round((price * 1.3) / 1000) * 1000,
+        strike,
         stock: getVariantStock(product, label, tObj.label),
       };
     })
@@ -45,7 +56,6 @@ export function getCheapestVariant(product) {
     accountTypeId: ACCOUNT_TYPES[0].id,
     variantIndex: 0,
     price: basePrice,
-    strike: Math.round((basePrice * 1.3) / 1000) * 1000,
     stock: Number(product?.stock) || 0,
   };
 }
@@ -81,12 +91,16 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
   const activeType = ACCOUNT_TYPES.find((t) => t.id === selectedTypeId) || ACCOUNT_TYPES[0];
   const typeMult = Number(activeType.multiplier) || 1;
   const isLifetime = String(product.duration).toLowerCase().includes('vĩnh viễn');
+  const base1M =
+    Number(product.variantPrices?.[`1 Tháng|${activeType.label}`]) ||
+    Math.round((product.price * typeMult) / 1000) * 1000;
   const variants = isLifetime
     ? [
         {
           label: product.duration,
           price: Math.round((product.price * typeMult) / 1000) * 1000,
-          strike: Math.round((product.strikePrice * typeMult) / 1000) * 1000,
+          strike: 0,
+          stock: getVariantStock(product, product.duration, activeType.label),
         },
       ]
     : DURATION_VARIANTS.map((v) => {
@@ -95,8 +109,9 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
           customPrice >= 1000
             ? customPrice
             : Math.round((product.price * v.multiplier * typeMult) / 1000) * 1000;
-        const strike = Math.round((price * 1.3) / 1000) * 1000;
-        return { label: v.label, price, strike };
+        const months = Math.max(1, Number.parseInt(v.label, 10) || 1);
+        const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
+        return { label: v.label, price, strike, stock: getVariantStock(product, v.label, activeType.label) };
       });
 
   const activeIdx = Math.min(selectedVariantIndex, variants.length - 1);
@@ -122,61 +137,68 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
   document.getElementById('hero-duration').textContent = `${currentVariant.label} • ${activeType.label}`;
   const isUnpriced = currentVariant.price < 1000;
   document.getElementById('hero-price').textContent = isUnpriced ? 'Chưa mở bán' : formatVnd(currentVariant.price);
-  document.getElementById('hero-strike').textContent = isUnpriced ? '' : formatVnd(currentVariant.strike);
+  const hasDiscount = !isUnpriced && currentVariant.strike > currentVariant.price;
+  const strikeEl = document.getElementById('hero-strike');
+  if (strikeEl) {
+    strikeEl.hidden = !hasDiscount;
+    strikeEl.textContent = hasDiscount ? formatVnd(currentVariant.strike) : '';
+  }
 
   const stickyDuration = document.getElementById('sticky-detail-duration');
   const stickyPrice = document.getElementById('sticky-detail-price');
   if (stickyDuration) stickyDuration.textContent = `${currentVariant.label} • ${activeType.label}`;
   if (stickyPrice) stickyPrice.textContent = isUnpriced ? 'Chưa mở bán' : formatVnd(currentVariant.price);
 
-  const pct =
-    !isUnpriced && currentVariant.strike > currentVariant.price
-      ? Math.round((1 - currentVariant.price / currentVariant.strike) * 100)
-      : 0;
-  document.getElementById('hero-discount').textContent = isUnpriced
-    ? 'Chưa mở bán'
-    : pct > 0
-      ? `-${pct}%`
-      : 'Giá tốt 24/7';
+  const pct = hasDiscount ? Math.round((1 - currentVariant.price / currentVariant.strike) * 100) : 0;
+  const discountEl = document.getElementById('hero-discount');
+  if (discountEl) {
+    discountEl.hidden = isUnpriced || pct <= 0;
+    discountEl.textContent = pct > 0 ? `-${pct}%` : '';
+  }
 
   const durationWrap = document.getElementById('detail-duration-options');
   if (durationWrap) {
     durationWrap.innerHTML = variants
-      .map(
-        (v, idx) => `
+      .map((v, idx) => {
+        const disabled = v.stock <= 0 || v.price < 1000;
+        const subText = v.price < 1000 ? 'Chưa mở bán' : v.stock <= 0 ? 'Hết hàng (SL: 0)' : formatVnd(v.price);
+        return `
         <button
           type="button"
-          class="duration-btn ${idx === activeIdx ? 'is-active' : ''}"
+          class="duration-btn ${idx === activeIdx ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''}"
           data-variant-index="${idx}"
+          ${disabled ? 'disabled aria-disabled="true"' : ''}
         >
           <strong>${escapeHtml(v.label)}</strong>
-          <span>${formatVnd(v.price)}</span>
-        </button>
-      `
-      )
+          <span>${subText}</span>
+        </button>`;
+      })
       .join('');
   }
 
   const typeWrap = document.getElementById('detail-account-types');
   if (typeWrap) {
-    typeWrap.innerHTML = ACCOUNT_TYPES.map(
-      (t) => `
+    typeWrap.innerHTML = ACCOUNT_TYPES.map((t) => {
+      const tStock = getVariantStock(product, currentVariant.label, t.label);
+      const disabled = tStock <= 0;
+      const subText = disabled ? 'Hết hàng (SL: 0)' : `${t.desc} • SL: ${tStock}`;
+      return `
         <button
           type="button"
-          class="account-type-btn ${t.id === activeType.id ? 'is-active' : ''}"
+          class="account-type-btn ${t.id === activeType.id ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''}"
           data-type-id="${escapeHtml(t.id)}"
+          ${disabled ? 'disabled aria-disabled="true"' : ''}
         >
           <strong>${escapeHtml(t.label)}</strong>
-          <span>${escapeHtml(t.desc)}</span>
-        </button>
-      `
-    ).join('');
+          <span>${escapeHtml(subText)}</span>
+        </button>`;
+    }).join('');
   }
 
   const stockEl = document.getElementById('hero-stock');
   const isEmpty = variantStock === 0;
   stockEl.textContent = isEmpty
-    ? 'Hết hàng'
+    ? 'Còn 0 tài khoản (Hết hàng)'
     : isManual
       ? `Còn ${variantStock} suất (Cấp thủ công)`
       : `Còn ${variantStock} tài khoản`;
@@ -224,11 +246,9 @@ export function renderProductGrid(products) {
       const stockClass = isEmpty ? 'is-empty' : isLow ? 'is-low' : '';
       const stockLabel = isEmpty ? 'Hết hàng' : `Còn ${item.stock} tài khoản`;
       const hasPrice = cheapest.price >= 1000;
+      const hasDiscount = hasPrice && Number(cheapest.strike) > cheapest.price;
       const priceLabel = hasPrice ? formatVnd(cheapest.price) : 'Chưa mở bán';
-      const discountPct =
-        hasPrice && cheapest.strike > cheapest.price
-          ? Math.round((1 - cheapest.price / cheapest.strike) * 100)
-          : 0;
+      const discountPct = hasDiscount ? Math.round((1 - cheapest.price / cheapest.strike) * 100) : 0;
 
       return `
         <article class="product-card ${isEmpty ? 'is-out-of-stock' : ''}" data-product-id="${escapeHtml(item.id)}">
@@ -250,7 +270,7 @@ export function renderProductGrid(products) {
           <div class="card-footer">
             <div class="card-price-row">
               <strong class="card-price">${priceLabel}</strong>
-              ${hasPrice ? `<del class="card-strike">${formatVnd(cheapest.strike)}</del>` : ''}
+              ${hasDiscount ? `<del class="card-strike">${formatVnd(cheapest.strike)}</del>` : ''}
               ${discountPct > 0 ? `<span class="discount-badge card-discount-badge">-${discountPct}%</span>` : ''}
             </div>
             <div class="card-actions">

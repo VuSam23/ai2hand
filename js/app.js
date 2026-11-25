@@ -238,7 +238,7 @@ function bindEvents() {
 
   document.getElementById('detail-duration-options')?.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-variant-index]');
-    if (!btn || !state.selectedProductId) return;
+    if (!btn || btn.disabled || btn.classList.contains('is-disabled') || !state.selectedProductId) return;
     state.selectedVariantIndex = Number(btn.dataset.variantIndex) || 0;
     const prod = state.products.find((p) => p.id === state.selectedProductId);
     if (prod) renderProductDetail(prod, state.selectedVariantIndex, state.selectedAccountTypeId);
@@ -246,7 +246,7 @@ function bindEvents() {
 
   document.getElementById('detail-account-types')?.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-type-id]');
-    if (!btn || !state.selectedProductId) return;
+    if (!btn || btn.disabled || btn.classList.contains('is-disabled') || !state.selectedProductId) return;
     state.selectedAccountTypeId = btn.dataset.typeId;
     const prod = state.products.find((p) => p.id === state.selectedProductId);
     if (prod) renderProductDetail(prod, state.selectedVariantIndex, state.selectedAccountTypeId);

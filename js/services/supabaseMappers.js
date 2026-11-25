@@ -53,7 +53,10 @@ export function getVariantStock(product, duration = '1 Tháng', accountType = 'T
   if (manualQty > 0) return manualQty;
   if (product.stock === 0) return 0;
   const variants = product.variantStocks || {};
-  const hasVariantMap = Object.keys(variants).length > 0 || Object.keys(product.manualStocks || {}).length > 0;
+  const hasVariantMap =
+    Object.keys(variants).length > 0 ||
+    Object.keys(product.manualStocks || {}).length > 0 ||
+    Object.keys(product.variantPrices || {}).length > 0;
   if (!hasVariantMap) return product.stock;
   return Number(variants[key] || 0);
 }
