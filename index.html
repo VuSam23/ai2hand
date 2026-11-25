@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; connect-src 'self' https://*.supabase.co; img-src 'self' https: data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self';"
+  />
+  <title>AI2Hand — Kho Tài Khoản AI Dùng Chung &amp; Cấp Riêng Tự Động 24/7</title>
+  <meta name="description" content="AI2Hand - Nền tảng cung cấp tài khoản AI dùng chung &amp; cấp riêng tự động 24/7. Nhận key tức thì sau 5 giây thanh toán VietQR cho ChatGPT Plus, Claude Pro, Canva, CapCut..." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="AI2Hand — Kho Tài Khoản AI Dùng Chung &amp; Cấp Riêng Tự Động 24/7" />
+  <meta property="og:description" content="Nhận tài khoản tức thì sau 5 giây. Đầy đủ ChatGPT Plus, Claude Pro, Canva, CapCut... Giá siêu hời, bảo hành 1 đổi 1." />
+  <meta property="og:image" content="./assets/og-banner.png" />
+  <meta property="og:url" content="https://ai2hand.vn" />
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/tokens.css" />
+  <link rel="stylesheet" href="./css/components.css" />
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/mobile.css" />
+</head>
+<body>
+  <!-- SVG Sprite nhẹ -->
+  <svg xmlns="http://www.w3.org/2000/svg" class="svg-sprite" aria-hidden="true">
+    <symbol id="icon-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+      <path d="M2 17l10 5 10-5" />
+      <path d="M2 12l10 5 10-5" />
+    </symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </symbol>
+    <symbol id="icon-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="m9 12 2 2 4-4" />
+    </symbol>
+    <symbol id="icon-support" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </symbol>
+    <symbol id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </symbol>
+    <symbol id="icon-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 12h14" />
+    </symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </symbol>
+    <symbol id="icon-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect width="5" height="5" x="3" y="3" rx="1" />
+      <rect width="5" height="5" x="16" y="3" rx="1" />
+      <rect width="5" height="5" x="3" y="16" rx="1" />
+      <path d="M21 16h-3a2 2 0 0 0-2 2v3" />
+      <path d="M21 21v.01" />
+      <path d="M12 7v3a2 2 0 0 1-2 2H7" />
+      <path d="M3 12h.01" />
+      <path d="M12 3h.01" />
+      <path d="M12 16v.01" />
+      <path d="M16 12h1" />
+      <path d="M21 12v.01" />
+      <path d="M12 21v-1" />
+    </symbol>
+    <symbol id="icon-store" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+      <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
+      <path d="M2 7h20" />
+    </symbol>
+    <symbol id="icon-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+      <path d="M8 7h8" />
+      <path d="M8 11h8" />
+      <path d="M8 15h5" />
+    </symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
+      <path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+      <path d="M12 2v2" />
+      <path d="M12 22v-2" />
+      <path d="m17 20.66-1-1.73" />
+      <path d="M11 10.27 7 3.34" />
+      <path d="m20.66 17-1.73-1" />
+      <path d="m3.34 7 1.73 1" />
+      <path d="M14 12h8" />
+      <path d="M2 12h2" />
+    </symbol>
+    <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m12 19-7-7 7-7" />
+      <path d="M19 12H5" />
+    </symbol>
+    <symbol id="icon-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14" />
+      <path d="m19 12-7 7-7-7" />
+    </symbol>
+    <symbol id="icon-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+    </symbol>
+    <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </symbol>
+    <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </symbol>
+    <symbol id="icon-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="7.5" cy="15.5" r="5.5" />
+      <path d="m21 2-9.6 9.6" />
+      <path d="m15.5 7.5 3 3L22 7l-3-3" />
+    </symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      <path d="m15 5 4 4" />
+    </symbol>
+  </svg>
+
+  <!-- Header cố định -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#home" class="brand logo-lockup" data-tab="home">
+        <svg class="logo-mark" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M5.5 9.5L13.5 3.5C15.1 2.3 17.3 2.5 18.6 3.9L23 8.5L17.8 11.2L14.5 7.7L8.7 12.1C7.3 13.1 5.3 12.1 5.5 9.5Z" fill="#0052CC"/>
+          <path d="M22.5 18.5L14.5 24.5C12.9 25.7 10.7 25.5 9.4 24.1L5 19.5L10.2 16.8L13.5 20.3L19.3 15.9C20.7 14.9 22.7 15.9 22.5 18.5Z" fill="#0EA5E9"/>
+          <path d="M4.2 12.2C3.4 13.8 3.6 15.8 4.8 17.2L8.4 14.5L4.2 12.2Z" fill="#0052CC"/>
+          <path d="M23.8 15.8C24.6 14.2 24.4 12.2 23.2 10.8L19.6 13.5L23.8 15.8Z" fill="#0EA5E9"/>
+          <path d="M14 8.5L15.4 12.6L19.5 14L15.4 15.4L14 19.5L12.6 15.4L8.5 14L12.6 12.6L14 8.5Z" fill="#0052CC"/>
+          <circle cx="14" cy="14" r="1.4" fill="#FFFFFF"/>
+        </svg>
+        <span class="wordmark"><span class="wordmark-ai">AI</span><span class="wordmark-2hand">2Hand</span></span>
+        <span class="status-pill"><span class="status-dot" aria-hidden="true"></span><span>24/7</span></span>
+      </a>
+
+      <div class="header-search">
+        <svg class="icon search-icon" aria-hidden="true"><use href="#icon-search" /></svg>
+        <input
+          id="global-search"
+          type="search"
+          class="search-input"
+          placeholder="Tìm ChatGPT, Netflix, Canva, Key Windows..."
+          autocomplete="off"
+          aria-label="Tìm kiếm gói tài khoản"
+        />
+      </div>
+
+      <nav class="main-nav" aria-label="Điều hướng chính">
+        <button type="button" class="nav-link is-active" data-tab="home">
+          <svg class="icon" aria-hidden="true"><use href="#icon-store" /></svg>
+          <span>Cửa hàng</span>
+        </button>
+        <button type="button" class="nav-link" data-tab="my-orders" hidden>
+          <svg class="icon" aria-hidden="true"><use href="#icon-receipt" /></svg>
+          <span>Đơn hàng của tôi</span>
+        </button>
+        <button type="button" class="nav-link" data-tab="admin" hidden>
+          <svg class="icon" aria-hidden="true"><use href="#icon-settings" /></svg>
+          <span>Admin Kho</span>
+        </button>
+      </nav>
+
+      <div class="header-actions">
+        <button type="button" class="btn btn-ghost header-filter-btn" id="header-filter-toggle" aria-label="Bộ lọc sản phẩm" aria-expanded="false">
+          <svg class="icon text-primary" aria-hidden="true"><use href="#icon-filter" /></svg>
+          <span>Lọc</span>
+        </button>
+        <button
+          type="button"
+          class="header-avatar-btn"
+          data-tab="account"
+          data-view="account"
+          title="Tài khoản của tôi"
+          aria-label="Tài khoản của tôi"
+        >
+          <svg class="icon" aria-hidden="true"><use href="#icon-user" /></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page-main">
+    <!-- ================================================================
+         VIEW 1: TRANG CHỦ CHÍNH (MẶC ĐỊNH KHI MỞ WEB)
+         ================================================================ -->
+    <section id="view-home" class="tab-view is-active" aria-labelledby="home-heading">
+      <div class="home-layout">
+        <!-- Sidebar Trái: Danh mục, Lọc giá, Cam kết -->
+        <aside id="home-sidebar" class="home-sidebar" aria-label="Bộ lọc sản phẩm">
+          <!-- Khối 1: Danh mục -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-head">
+              <h2 class="sidebar-title">Danh Mục Tài Khoản</h2>
+            </div>
+            <div id="category-filters" class="category-list" role="tablist" aria-label="Lọc theo danh mục"></div>
+          </div>
+
+          <!-- Khối 2: Lọc theo khoảng giá -->
+          <div class="sidebar-card">
+            <div class="sidebar-card-head">
+              <h2 class="sidebar-title">
+                <svg class="icon text-primary" aria-hidden="true"><use href="#icon-filter" /></svg>
+                Lọc Khoảng Giá
+              </h2>
+            </div>
+            <div id="price-filters" class="price-filter-list">
+              <label class="price-radio">
+                <input type="radio" name="price_filter" value="all" checked />
+                <span>Tất cả mức giá</span>
+              </label>
+              <label class="price-radio">
+                <input type="radio" name="price_filter" value="under_50" />
+                <span>Dưới 50.000₫</span>
+              </label>
+              <label class="price-radio">
+                <input type="radio" name="price_filter" value="50_100" />
+                <span>50.000₫ – 100.000₫</span>
+              </label>
+              <label class="price-radio">
+                <input type="radio" name="price_filter" value="100_200" />
+                <span>100.000₫ – 200.000₫</span>
+              </label>
+              <label class="price-radio">
+                <input type="radio" name="price_filter" value="above_200" />
+                <span>Trên 200.000₫</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Khối 3: Cam kết & Hỗ trợ -->
+          <div class="sidebar-card sidebar-trust-card">
+            <h2 class="sidebar-title">
+              <svg class="icon text-secondary" aria-hidden="true"><use href="#icon-shield" /></svg>
+              Cam Kết &amp; Hỗ Trợ
+            </h2>
+            <div class="sidebar-trust-items">
+              <div class="sidebar-trust-item">
+                <strong>Bảo hành 1 đổi 1</strong>
+                <span>Đổi mới ngay nếu phát sinh lỗi suốt thời gian dùng.</span>
+              </div>
+              <div class="sidebar-trust-item">
+                <strong>Giao tự động 5s</strong>
+                <span>Trả tài khoản ngay trên màn hình sau khi quét VietQR.</span>
+              </div>
+            </div>
+            <a class="btn btn-secondary btn-block" href="https://zalo.me" target="_blank" rel="noopener noreferrer">
+              <svg class="icon" aria-hidden="true"><use href="#icon-support" /></svg>
+              <span>Chat Zalo Kỹ Thuật</span>
+            </a>
+          </div>
+        </aside>
+
+        <!-- Cột Phải: Banner + Toolbar + Lưới Sản Phẩm -->
+        <div class="home-catalog">
+          <!-- Banner Khuyến Mãi -->
+          <div class="home-banner">
+            <div class="banner-content">
+              <span class="banner-pill">⚡ GIAO TỰ ĐỘNG 24/7</span>
+              <h1 id="home-heading" class="banner-title">Kho Tài Khoản AI &amp; Giải Trí Giá Rẻ – Bảo Hành 1 Đổi 1</h1>
+              <p class="banner-desc">Cấp mã kích hoạt và tài khoản riêng tư tự động sau 5 giây thanh toán VietQR.</p>
+              <a href="#catalog-toolbar" class="banner-cta">
+                <span>Khám phá ngay</span>
+                <svg class="icon" aria-hidden="true"><use href="#icon-arrow-down" /></svg>
+              </a>
+            </div>
+            <div class="banner-emblem" aria-hidden="true">24/7</div>
+          </div>
+
+          <!-- Mobile Search & Filter Toggle Bar -->
+          <div class="mobile-controls-row">
+            <div class="mobile-search-wrap">
+              <svg class="icon search-icon" aria-hidden="true"><use href="#icon-search" /></svg>
+              <input
+                id="mobile-search"
+                type="search"
+                class="search-input"
+                placeholder="Tìm theo tên gói tài khoản..."
+                autocomplete="off"
+                aria-label="Tìm kiếm gói tài khoản trên di động"
+              />
+            </div>
+            <button type="button" class="btn btn-ghost mobile-filter-btn" id="mobile-filter-toggle" aria-expanded="false">
+              <svg class="icon text-primary" aria-hidden="true"><use href="#icon-filter" /></svg>
+              <span>Bộ lọc</span>
+            </button>
+          </div>
+
+          <!-- Toolbar: Tiêu đề, Sắp xếp, Trust Badges -->
+          <div id="catalog-toolbar" class="catalog-toolbar-card">
+            <div class="toolbar-top">
+              <div>
+                <div class="toolbar-title-row">
+                  <h2 class="section-title">Tất Cả Sản Phẩm Tài Khoản</h2>
+                  <span class="result-count-pill" id="catalog-count">Đang tải...</span>
+                </div>
+                <p class="section-subtitle">Bấm vào tên sản phẩm để xem chi tiết, hoặc bấm Mua ngay để thanh toán VietQR.</p>
+              </div>
+              <div class="sort-wrap">
+                <label for="catalog-sort">Sắp xếp:</label>
+                <select id="catalog-sort" class="sort-select">
+                  <option value="default">Mặc định</option>
+                  <option value="price_asc">Giá: Thấp đến Cao</option>
+                  <option value="price_desc">Giá: Cao đến Thấp</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="toolbar-badges">
+              <span class="mini-badge is-live">⚡ Giao ngay 24/7 trong 5s</span>
+              <span class="mini-badge">🛡️ Bảo hành minh bạch 1 đổi 1</span>
+              <span class="mini-badge">✅ Kiểm tra hoạt động 100%</span>
+            </div>
+          </div>
+
+          <!-- Lưới Sản Phẩm -->
+          <div class="product-grid" id="product-grid" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         VIEW 2: TRANG CHI TIẾT SẢN PHẨM (KẾ THỪA GIAO DIỆN CŨ)
+         ================================================================ -->
+    <section id="view-product-detail" class="tab-view" aria-labelledby="hero-title" hidden>
+      <div class="detail-nav-bar">
+        <button type="button" class="btn btn-ghost" id="back-to-home-btn">
+          <svg class="icon" aria-hidden="true"><use href="#icon-arrow-left" /></svg>
+          <span>Quay lại Cửa hàng</span>
+        </button>
+        <nav class="detail-breadcrumb" aria-label="Breadcrumb">
+          <a href="#home" data-tab="home">Trang chủ</a>
+          <span>/</span>
+          <span id="detail-breadcrumb-cat">Danh mục</span>
+          <span>/</span>
+          <strong id="detail-breadcrumb-name">Chi tiết gói</strong>
+        </nav>
+      </div>
+
+      <article class="hero-card" id="hero-spotlight">
+        <div class="hero-media">
+          <div class="hero-status-badges">
+            <span class="pill pill-live">
+              <span class="pulse-dot" aria-hidden="true"></span>
+              Cấp tự động 24/7
+            </span>
+            <span class="pill pill-license">Official License</span>
+          </div>
+
+          <div class="hero-emblem" id="hero-emblem">AI</div>
+          <p class="hero-tagline" id="hero-tagline">GPT-4o • DALL-E 3 • Canvas Studio</p>
+          <p class="hero-uptime">Hệ thống máy chủ chính hãng • Ổn định 99.9%</p>
+
+          <div class="trust-grid">
+            <div class="trust-item">
+              <svg class="icon text-secondary" aria-hidden="true"><use href="#icon-bolt" /></svg>
+              <strong>Giao tức thì 5s</strong>
+              <span>Web &amp; Email</span>
+            </div>
+            <div class="trust-item">
+              <svg class="icon text-primary" aria-hidden="true"><use href="#icon-shield" /></svg>
+              <strong>Bảo hành 1:1</strong>
+              <span>Full thời gian</span>
+            </div>
+            <div class="trust-item">
+              <svg class="icon text-secondary" aria-hidden="true"><use href="#icon-support" /></svg>
+              <strong>Hỗ trợ 24/7</strong>
+              <span>Zalo 1-3 phút</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-info">
+          <div class="hero-meta-row">
+            <span class="category-chip" id="hero-category">Tài khoản AI</span>
+            <span class="stock-pill" id="hero-stock">Sẵn hàng</span>
+          </div>
+
+          <h1 class="hero-title" id="hero-title">ChatGPT Plus (GPT-4o &amp; Canvas)</h1>
+          <p class="hero-desc" id="hero-desc">
+            Mở full tính năng phân tích dữ liệu, tạo ảnh DALL-E 3 siêu nét, duyệt web thời gian thực và Canvas Studio cho lập trình.
+          </p>
+
+          <div class="price-box">
+            <strong class="price-current" id="hero-price">89.000₫</strong>
+            <del class="price-old" id="hero-strike">120.000₫</del>
+            <span class="discount-badge" id="hero-discount">Tiết kiệm 26%</span>
+          </div>
+
+          <div class="duration-picker">
+            <span class="duration-label">Chọn thời hạn sử dụng:</span>
+            <div class="duration-options" id="detail-duration-options"></div>
+          </div>
+
+          <div class="duration-picker">
+            <span class="duration-label">Hình thức nhận tài khoản:</span>
+            <div class="account-type-options" id="detail-account-types"></div>
+          </div>
+
+          <div class="detail-specs-box">
+            <div><span>Thời hạn gói:</span> <strong id="hero-duration">1 Tháng</strong></div>
+            <div><span>Hình thức giao:</span> <strong>Tự động qua Web &amp; Lưu lịch sử</strong></div>
+          </div>
+
+          <div class="hero-actions" id="detail-sticky-bar">
+            <div class="sticky-cta-summary">
+              <span class="sticky-cta-label" id="sticky-detail-duration">Gói 1 Tháng</span>
+              <strong class="sticky-cta-price" id="sticky-detail-price">89.000₫</strong>
+            </div>
+            <button type="button" class="btn btn-primary btn-lg" id="hero-buy-btn">
+              <svg class="icon" aria-hidden="true"><use href="#icon-bolt" /></svg>
+              <span>Mua Ngay (VietQR Tự Động 24/7)</span>
+            </button>
+          </div>
+
+          <div class="security-note">
+            <svg class="icon text-secondary" aria-hidden="true"><use href="#icon-lock" /></svg>
+            <span>Bảo mật 100% qua cổng VietQR tự động. Nhận tài khoản ngay trên màn hình sau khi thanh toán.</span>
+          </div>
+        </div>
+      </article>
+
+      <section class="info-cards-grid" aria-label="Cam kết dịch vụ">
+        <article class="info-card">
+          <h3>
+            <svg class="icon text-primary" aria-hidden="true"><use href="#icon-check" /></svg>
+            Quyền Lợi &amp; Chất Lượng
+          </h3>
+          <ul class="info-list">
+            <li>Tài khoản sạch 100%, không dùng cookie lậu hay can thiệp trái phép.</li>
+            <li>Đầy đủ tính năng chính hãng, ổn định suốt thời gian sử dụng.</li>
+            <li>Hỗ trợ hướng dẫn đăng nhập, đổi mật khẩu chi tiết.</li>
+          </ul>
+        </article>
+        <article class="info-card">
+          <h3>
+            <svg class="icon text-secondary" aria-hidden="true"><use href="#icon-bolt" /></svg>
+            Quy Trình Nhận Hàng 5 Giây
+          </h3>
+          <ol class="info-steps">
+            <li><strong>Chọn gói &amp; nhập Email/Zalo:</strong> Bấm Mua ngay trên gói cần mua.</li>
+            <li><strong>Quét mã VietQR động:</strong> Hệ thống tạo sẵn số tiền và nội dung <code>ACCxxxxx</code>.</li>
+            <li><strong>Nhận tài khoản tức thì:</strong> Khung <code>user|pass</code> hiển thị ngay và lưu trong Tra cứu đơn.</li>
+          </ol>
+        </article>
+        <article class="info-card">
+          <h3>
+            <svg class="icon text-primary" aria-hidden="true"><use href="#icon-shield" /></svg>
+            Bảo Hành 1 Đổi 1 Toàn Kỳ
+          </h3>
+          <ul class="info-list">
+            <li><strong>Lỗi là đổi mới:</strong> Cấp ngay tài khoản thay thế trong 3 phút nếu phát sinh lỗi.</li>
+            <li><strong>Hoàn tiền minh bạch:</strong> Hoàn lại theo số ngày chưa dùng nếu không khắc phục được.</li>
+            <li><strong>Lưu lịch sử đơn:</strong> Tra cứu lại bất cứ lúc nào bằng Mã đơn hoặc Email/SĐT.</li>
+          </ul>
+        </article>
+      </section>
+    </section>
+
+    <!-- ================================================================
+         VIEW 3B: TRANG TÀI KHOẢN NGƯỜI DÙNG (ACCOUNT USER VIEW)
+         ================================================================ -->
+    <section id="view-account" class="tab-view" aria-labelledby="account-welcome-title" hidden>
+      <!-- Top Breadcrumb & Micro-Bar -->
+      <div class="account-topbar">
+        <nav class="detail-breadcrumb" aria-label="Breadcrumb Tài khoản">
+          <a href="#home" data-tab="home">Trang chủ</a>
+          <span>/</span>
+          <span>Tài khoản của tôi</span>
+          <span>/</span>
+          <strong class="text-primary">Tổng quan tài khoản</strong>
+        </nav>
+        <div class="api-live-pill">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span>Hệ thống API Cấp Key 24/7 trực tuyến</span>
+        </div>
+      </div>
+
+      <!-- Main Grid Workspace -->
+      <div class="account-layout">
+        <!-- LEFT SIDEBAR -->
+        <aside class="account-sidebar" aria-label="Menu tài khoản">
+          <div class="user-quick-card">
+            <div class="user-avatar" id="acc-sidebar-avatar">NV</div>
+            <div class="user-quick-info">
+              <h2 id="acc-sidebar-name">Nguyễn Văn A</h2>
+              <p id="acc-sidebar-email">khachhang@gmail.com</p>
+            </div>
+          </div>
+
+          <nav class="account-nav" aria-label="Điều hướng tài khoản">
+            <button type="button" class="account-nav-item is-active" id="acc-nav-overview">
+              <span class="account-nav-label">
+                <svg class="icon" aria-hidden="true"><use href="#icon-user" /></svg>
+                <span>Tổng quan</span>
+              </span>
+            </button>
+            <button type="button" class="account-nav-item" id="acc-nav-orders">
+              <span class="account-nav-label">
+                <svg class="icon" aria-hidden="true"><use href="#icon-receipt" /></svg>
+                <span>Đơn hàng &amp; Tài khoản</span>
+              </span>
+              <span class="result-count-pill" id="acc-sidebar-order-count">0 đơn</span>
+            </button>
+            <button type="button" class="account-nav-item" id="acc-nav-profile">
+              <span class="account-nav-label">
+                <svg class="icon" aria-hidden="true"><use href="#icon-edit" /></svg>
+                <span>Thông tin &amp; Liên hệ</span>
+              </span>
+            </button>
+            <button type="button" class="account-nav-item text-error" id="user-logout-btn">
+              <span class="account-nav-label">
+                <svg class="icon" aria-hidden="true"><use href="#icon-close" /></svg>
+                <span>Đăng xuất tài khoản</span>
+              </span>
+            </button>
+          </nav>
+
+          <div class="sidebar-card account-assurance-card">
+            <div class="assurance-head">
+              <svg class="icon text-secondary" aria-hidden="true"><use href="#icon-shield" /></svg>
+              <strong>Cam kết Bản Quyền 100%</strong>
+            </div>
+            <p>
+              Mọi tài khoản &amp; key được cấp phát trực tiếp từ máy chủ đối tác, bảo hành trọn thời hạn sử dụng.
+            </p>
+          </div>
+        </aside>
+
+        <!-- RIGHT MAIN CONTENT -->
+        <div class="account-main">
+          <!-- Tab 1: Tổng quan -->
+          <div id="acc-tab-overview" style="display:flex;flex-direction:column;gap:1rem;">
+            <!-- Welcome Card -->
+            <article class="welcome-card">
+              <div class="welcome-info">
+                <div class="welcome-title-row">
+                  <h1 id="account-welcome-title" class="welcome-title">Xin chào, Nguyễn Văn A 👋</h1>
+                  <span class="member-badge" id="acc-member-tier">Thành viên Bạc</span>
+                </div>
+                <p class="welcome-meta" id="acc-welcome-meta">
+                  khachhang@gmail.com • Zalo: 0912345678 • Tham gia: 12/02/2026
+                </p>
+              </div>
+              <button type="button" class="btn btn-ghost" id="acc-toggle-edit-btn">
+                <svg class="icon" aria-hidden="true"><use href="#icon-edit" /></svg>
+                <span>Chỉnh sửa thông tin</span>
+              </button>
+            </article>
+
+            <!-- Form chỉnh sửa thông tin cá nhân (Ẩn/Hiện) -->
+            <article id="acc-profile-card" class="panel-card profile-edit-card" hidden>
+              <div class="panel-header">
+                <h2 class="section-title">Cập Nhật Thông Tin Nhận Hàng Mặc Định</h2>
+                <p class="section-subtitle">Thông tin này được lưu trên trình duyệt của bạn và tự động điền khi mua gói mới.</p>
+              </div>
+              <form id="acc-profile-form" class="admin-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="acc-input-name">Họ và tên hiển thị *</label>
+                    <input id="acc-input-name" type="text" class="form-input" placeholder="Nguyễn Văn A" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="acc-input-email">Email nhận tài khoản *</label>
+                    <input id="acc-input-email" type="email" class="form-input" placeholder="khachhang@gmail.com" required />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="acc-input-phone">Số điện thoại Zalo hỗ trợ bảo hành</label>
+                  <input id="acc-input-phone" type="tel" class="form-input" placeholder="0912345678" />
+                </div>
+                <div class="profile-form-actions">
+                  <button type="submit" class="btn btn-primary">Lưu thông tin</button>
+                  <button type="button" class="btn btn-ghost" id="acc-cancel-edit-btn">Đóng</button>
+                </div>
+              </form>
+            </article>
+
+            <!-- Quick Technical Support Box -->
+            <div class="support-banner-card">
+              <div class="support-banner-info">
+                <div class="support-banner-icon">
+                  <svg class="icon" aria-hidden="true"><use href="#icon-support" /></svg>
+                </div>
+                <div>
+                  <h3>Cần hỗ trợ đổi pass hoặc bảo hành tài khoản?</h3>
+                  <p>Kỹ thuật viên trực Zalo 24/7 hỗ trợ giải quyết trong 1–3 phút.</p>
+                </div>
+              </div>
+              <a class="btn btn-secondary" href="https://zalo.me" target="_blank" rel="noopener noreferrer">
+                <svg class="icon" aria-hidden="true"><use href="#icon-support" /></svg>
+                <span>Chat Zalo Hỗ Trợ</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Tab 2: Đơn hàng & Tài khoản -->
+          <div id="acc-tab-orders" style="display:flex;flex-direction:column;gap:1rem;" hidden>
+            <!-- 2 Stat Cards -->
+            <div class="stat-grid">
+              <article class="stat-card">
+                <div class="stat-content">
+                  <span class="stat-label">Tổng số tiền đã nạp</span>
+                  <strong class="stat-value" id="acc-stat-orders">0₫</strong>
+                  <span class="stat-note text-secondary">
+                    <svg class="icon" aria-hidden="true"><use href="#icon-bolt" /></svg>
+                    100% thanh toán tự động
+                  </span>
+                </div>
+                <div class="stat-icon is-primary">
+                  <svg class="icon icon-lg" aria-hidden="true"><use href="#icon-receipt" /></svg>
+                </div>
+              </article>
+
+              <article class="stat-card">
+                <div class="stat-content">
+                  <span class="stat-label">Số tài khoản đã mua</span>
+                  <strong class="stat-value text-secondary" id="acc-stat-keys">00 tài khoản</strong>
+                  <span class="stat-note">
+                    <svg class="icon text-secondary" aria-hidden="true"><use href="#icon-shield" /></svg>
+                    Hệ thống bảo hành 24/7
+                  </span>
+                </div>
+                <div class="stat-icon is-secondary">
+                  <svg class="icon icon-lg" aria-hidden="true"><use href="#icon-key" /></svg>
+                </div>
+              </article>
+            </div>
+
+            <!-- Recent Purchases Table / Mobile Cards -->
+            <article class="panel-card account-orders-card" id="acc-orders-section">
+              <div class="account-orders-head">
+                <div class="orders-title-wrap">
+                  <h2 class="section-title">Đơn hàng &amp; Tài khoản nhận gần đây</h2>
+                  <span class="pulse-dot" aria-hidden="true"></span>
+                </div>
+              </div>
+
+              <div class="acc-table-wrap">
+                <table class="acc-order-table" aria-label="Danh sách đơn hàng đã mua">
+                  <thead>
+                    <tr>
+                      <th>Mã đơn &amp; Ngày</th>
+                      <th>Sản phẩm &amp; Gói</th>
+                      <th>Trạng thái</th>
+                      <th>Tài khoản / Mã kích hoạt</th>
+                      <th class="text-right">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="account-orders-tbody"></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         VIEW 4A: MÀN HÌNH ĐĂNG NHẬP TÀI KHOẢN & ADMIN (#view-admin-login)
+         ================================================================ -->
+    <section id="view-admin-login" class="tab-view" aria-labelledby="admin-login-heading" hidden>
+      <article class="panel-card admin-login-card">
+        <div class="panel-header">
+          <span class="category-chip" id="admin-login-badge">Đăng nhập an toàn</span>
+          <h2 id="admin-login-heading" class="section-title" style="margin-top: 0.5rem;">Đăng Nhập Tài Khoản</h2>
+          <p class="section-subtitle" id="admin-login-subtitle">Đăng nhập để xem lịch sử đơn hàng &amp; kho tài khoản đã mua.</p>
+        </div>
+        <form id="admin-login-form" class="admin-form">
+          <div class="form-group">
+            <label for="admin-auth-email">Email tài khoản *</label>
+            <input id="admin-auth-email" type="email" class="form-input" placeholder="nhap_email@gmail.com" autocomplete="email" required />
+          </div>
+          <div class="form-group">
+            <label for="admin-auth-password">Mật khẩu *</label>
+            <div class="password-input-wrap">
+              <input id="admin-auth-password" type="password" class="form-input" placeholder="••••••••" autocomplete="current-password" minlength="8" required />
+              <button type="button" class="password-toggle-btn" id="toggle-auth-password-btn" aria-label="Hiện mật khẩu" aria-pressed="false">Hiện</button>
+            </div>
+            <p class="form-hint" id="auth-password-hint" hidden>Mật khẩu tối thiểu 8 ký tự (nên có cả chữ và số).</p>
+          </div>
+          <div class="form-group" id="auth-confirm-password-group" hidden>
+            <label for="admin-auth-confirm-password">Xác nhận mật khẩu *</label>
+            <input id="admin-auth-confirm-password" type="password" class="form-input" placeholder="••••••••" autocomplete="new-password" minlength="8" />
+            <p class="form-hint" id="auth-confirm-hint" hidden></p>
+          </div>
+          <div class="admin-login-actions">
+            <button type="submit" class="btn btn-primary btn-block" id="admin-login-submit-btn">
+              <svg class="icon" aria-hidden="true"><use href="#icon-lock" /></svg>
+              <span>Đăng nhập ngay</span>
+            </button>
+            <div class="auth-links-row">
+              <button type="button" class="btn btn-ghost" id="auth-toggle-mode-btn">Chưa có tài khoản? Đăng ký ngay</button>
+              <button type="button" class="btn btn-ghost" id="auth-forgot-btn">Quên mật khẩu?</button>
+            </div>
+          </div>
+        </form>
+      </article>
+    </section>
+
+    <!-- ================================================================
+         VIEW 4B: BẢNG ĐIỀU KHIỂN ADMIN (#view-admin)
+         ================================================================ -->
+    <section id="view-admin" class="tab-view" aria-labelledby="admin-heading" hidden>
+      <div class="account-layout">
+        <!-- LEFT SIDEBAR ADMIN -->
+        <aside class="account-sidebar" aria-label="Menu quản trị">
+          <div class="user-quick-card">
+            <div class="user-avatar">AD</div>
+            <div class="user-quick-info">
+              <h2>Quản trị viên</h2>
+              <p id="admin-auth-status">Đang kiểm tra phiên đăng nhập...</p>
+            </div>
+          </div>
+
+          <nav class="account-nav" id="admin-sidebar-nav" aria-label="Điều hướng quản trị">
+            <button type="button" class="account-nav-item is-active" data-admin-tab="stats">
+              <span class="account-nav-label">
+                <svg class="icon" aria-hidden="true"><use href="#icon-receipt" /></svg>
+                <span>Thống kê &amp; Doanh thu</span>
+              </span>
+            </button>
+            <button type="button" class="account-nav-item" data-admin-tab="products">
+              <span class="account-nav-label">
+                <svg class="icon" aria-hidden="true"><use href="#icon-store" /></svg>
+                <span>Sản phẩm &amp; Giá</span>
+              </span>
+            </button>
+            <button type="button" class="account-nav-item" data-admin-tab="inventory">
+              <span class="account-nav-label">
+                <svg class="icon" aria-hidden="true"><use href="#icon-edit" /></svg>
+                <span>Nhập &amp; Quản lý Kho</span>
+              </span>
+            </button>
+            <button type="button" class="account-nav-item" data-admin-tab="orders">
+              <span class="account-nav-label">
+                <svg class="icon" aria-hidden="true"><use href="#icon-shield" /></svg>
+                <span>Đơn hàng &amp; Voucher</span>
+              </span>
+            </button>
+            <button type="button" class="account-nav-item text-error" id="admin-logout-btn">
+              <span class="account-nav-label">
+                <svg class="icon" aria-hidden="true"><use href="#icon-close" /></svg>
+                <span>Đăng xuất Admin</span>
+              </span>
+            </button>
+          </nav>
+        </aside>
+
+        <!-- RIGHT MAIN CONTENT ADMIN -->
+        <div class="account-main">
+          <!-- Tab 1: Thống kê & Doanh thu -->
+          <div id="admin-tab-stats">
+            <article id="admin-stats-section" class="panel-card">
+              <div class="panel-header">
+                <h2 class="section-title">Báo Cáo Thống Kê Nhanh</h2>
+                <p class="section-subtitle">Tổng hợp doanh thu, tỷ lệ chốt đơn, nguồn truy cập và cảnh báo tồn kho.</p>
+              </div>
+              <div id="admin-stats-cards" class="stat-grid" style="margin-bottom: 0.85rem;"></div>
+              <div id="admin-stats-breakdown" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.75rem;"></div>
+            </article>
+          </div>
+
+          <!-- Tab 2: Sản phẩm & Giá -->
+          <div id="admin-tab-products" style="display:flex;flex-direction:column;gap:1rem;" hidden>
+            <article class="panel-card">
+              <div class="panel-header">
+                <h2 id="admin-heading" class="section-title">Thêm Gói Tài Khoản Mới</h2>
+                <p class="section-subtitle">Tạo nhanh vỏ sản phẩm mới, sau đó nạp key &amp; giá biến thể ở tab Nhập &amp; Quản lý Kho.</p>
+              </div>
+              <form id="admin-add-form" class="admin-form">
+                <div class="form-group">
+                  <label for="admin-name">Tên gói sản phẩm *</label>
+                  <input id="admin-name" type="text" class="form-input" placeholder="Ví dụ: Cursor Pro" required />
+                </div>
+                <div class="form-group">
+                  <label for="admin-category">Danh mục *</label>
+                  <select id="admin-category" class="form-input" required>
+                    <option value="Tài khoản AI">Tài khoản AI</option>
+                    <option value="Giải trí">Giải trí</option>
+                    <option value="Key Phần mềm">Key Phần mềm</option>
+                    <option value="Acc Game">Acc Game</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="admin-desc">Mô tả ngắn</label>
+                  <input id="admin-desc" type="text" class="form-input" placeholder="Tài khoản riêng • Bảo hành full thời gian" />
+                </div>
+                <div class="form-group">
+                  <label for="admin-image-url">Ảnh đại diện gói (Logo/Icon)</label>
+                  <div class="admin-image-picker">
+                    <div class="admin-image-preview" id="admin-image-preview">IMG</div>
+                    <div class="admin-image-inputs">
+                      <input id="admin-image-url" type="url" class="form-input" placeholder="Dán URL ảnh hoặc chọn tệp bên dưới..." />
+                      <input id="admin-image-file" type="file" accept="image/png,image/jpeg,image/webp" class="form-input" />
+                    </div>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Thêm gói vào Cửa hàng</button>
+              </form>
+            </article>
+
+            <article class="panel-card admin-stock-panel">
+              <div class="panel-header admin-stock-header">
+                <div>
+                  <h3 class="section-title">Quản Lý Kho Key &amp; Trạng Thái Bán</h3>
+                  <p class="section-subtitle">Số lượng key được đếm tự động từ <code>inventory_keys</code>. Bạn có thể bật/tắt trạng thái Đang bán / Tạm ẩn cho từng gói.</p>
+                </div>
+                <button type="button" class="btn btn-ghost text-error" id="admin-reset-btn">
+                  Reset dữ liệu Demo
+                </button>
+              </div>
+              <div id="admin-stock-list" class="admin-stock-list"></div>
+            </article>
+          </div>
+
+          <!-- Tab 3: Nhập & Quản lý Kho -->
+          <div id="admin-tab-inventory" hidden>
+            <article class="panel-card">
+              <div class="panel-header">
+                <h2 class="section-title">Nhập Kho Tài Khoản (<code>user|pass</code>)</h2>
+                <p class="section-subtitle">Dữ liệu được lưu bảo mật vào bảng <code>inventory_keys</code> trên Supabase (hoặc Vault khi dùng Demo).</p>
+              </div>
+              <form id="admin-import-form" class="admin-form">
+                <div class="form-group">
+                  <label for="admin-import-product">Chọn gói cần nạp kho</label>
+                  <select id="admin-import-product" class="form-input"></select>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="admin-import-duration">Thời hạn key</label>
+                    <select id="admin-import-duration" class="form-input">
+                      <option value="1 Tháng">1 Tháng</option>
+                      <option value="2 Tháng">2 Tháng</option>
+                      <option value="3 Tháng">3 Tháng</option>
+                      <option value="6 Tháng">6 Tháng</option>
+                      <option value="12 Tháng">12 Tháng</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="admin-import-type">Loại tài khoản</label>
+                    <select id="admin-import-type" class="form-input">
+                      <option value="Tài khoản riêng">Tài khoản riêng</option>
+                      <option value="Dùng chung">Dùng chung</option>
+                      <option value="Nâng cấp chính chủ">Nâng cấp chính chủ</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="admin-import-price">Giá bán biến thể (VNĐ)</label>
+                    <input id="admin-import-price" type="number" min="1000" step="1000" class="form-input" placeholder="Ví dụ: 60000" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="admin-import-lines">Danh sách <code>user|pass</code> (mỗi dòng 1 tài khoản)</label>
+                  <textarea
+                    id="admin-import-lines"
+                    rows="5"
+                    class="form-input mono-textarea"
+                    placeholder="demo1@shop.vn|Pass@123&#10;demo2@shop.vn|Pass@456"
+                  ></textarea>
+                </div>
+                <button type="submit" class="btn btn-secondary">Nạp vào Kho &amp; Cập nhật Tồn</button>
+              </form>
+            </article>
+          </div>
+
+          <!-- Tab 4: Đơn hàng & Voucher -->
+          <div id="admin-tab-orders" style="display:flex;flex-direction:column;gap:1rem;" hidden>
+            <div class="admin-layout">
+              <article class="panel-card">
+                <div class="panel-header">
+                  <h3 class="section-title">Tạo Mã Giảm Giá</h3>
+                  <p class="section-subtitle">Hỗ trợ giảm theo % (1–100%) hoặc số tiền VNĐ, toàn shop hoặc 1 gói.</p>
+                </div>
+                <form id="admin-promo-form" class="admin-form">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="admin-promo-code">Mã giảm giá *</label>
+                      <input id="admin-promo-code" type="text" class="form-input mono-text" placeholder="SALE20" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="admin-promo-type">Loại giảm *</label>
+                      <select id="admin-promo-type" class="form-input">
+                        <option value="percent">Phần trăm (%)</option>
+                        <option value="fixed">Số tiền (VNĐ)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="admin-promo-value">Giá trị giảm *</label>
+                      <input id="admin-promo-value" type="number" min="1" class="form-input" placeholder="10" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="admin-promo-product">Phạm vi áp dụng</label>
+                      <select id="admin-promo-product" class="form-input"></select>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="admin-promo-duration">Thời hạn áp dụng</label>
+                    <select id="admin-promo-duration" class="form-input">
+                      <option value="">Tất cả thời hạn</option>
+                      <option value="1 Tháng">1 Tháng</option>
+                      <option value="2 Tháng">2 Tháng</option>
+                      <option value="3 Tháng">3 Tháng</option>
+                      <option value="6 Tháng">6 Tháng</option>
+                      <option value="12 Tháng">12 Tháng</option>
+                    </select>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Lưu Mã Giảm Giá</button>
+                </form>
+              </article>
+
+              <article class="panel-card">
+                <div class="panel-header">
+                  <h3 class="section-title">Danh Sách Mã Giảm Giá</h3>
+                  <p class="section-subtitle">Bật/tắt hoặc xóa mã giảm giá đang lưu trong <code>promo_codes</code>.</p>
+                </div>
+                <div id="admin-promos-list" class="admin-stock-list"></div>
+              </article>
+            </div>
+
+            <article class="panel-card">
+              <div class="panel-header">
+                <h3 class="section-title">Lịch Sử Đơn Tự Động Gần Đây</h3>
+                <p class="section-subtitle">Đơn hàng được webhook VietQR duyệt &amp; cấp key tự động 24/7.</p>
+              </div>
+              <div id="admin-orders-list" class="admin-stock-list"></div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© 2026 AI2Hand 24/7 — Hệ thống bán tài khoản &amp; bản quyền tự động qua VietQR.</p>
+      <p class="footer-status">Vận hành tự động 99.99% • Bảo hành 1 đổi 1</p>
+    </div>
+  </footer>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav" aria-label="Điều hướng nhanh trên di động">
+    <button type="button" class="mobile-nav-btn is-active" data-tab="home">
+      <svg class="icon" aria-hidden="true"><use href="#icon-store" /></svg>
+      <span>Cửa hàng</span>
+    </button>
+    <button type="button" class="mobile-nav-btn" data-tab="my-orders" hidden>
+      <svg class="icon" aria-hidden="true"><use href="#icon-receipt" /></svg>
+      <span>Đơn hàng</span>
+    </button>
+    <button type="button" class="mobile-nav-btn" data-tab="account">
+      <svg class="icon" aria-hidden="true"><use href="#icon-user" /></svg>
+      <span>Tài khoản</span>
+    </button>
+    <button type="button" class="mobile-nav-btn" data-tab="admin" hidden>
+      <svg class="icon" aria-hidden="true"><use href="#icon-settings" /></svg>
+      <span>Admin Kho</span>
+    </button>
+  </nav>
+
+  <!-- Modal / Bottom Sheet Thanh Toán VietQR & Trả Hàng (GIỮ NGUYÊN 100% ID) -->
+  <div id="checkout-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+    <div class="modal-sheet">
+      <div class="modal-drag-handle" aria-hidden="true"></div>
+      <div class="modal-header">
+        <div>
+          <span class="modal-eyebrow" id="modal-step-label">Bước 1/2 • Thông tin nhận hàng</span>
+          <h2 id="modal-title" class="modal-title">Thanh toán tự động</h2>
+        </div>
+        <button type="button" class="icon-btn" id="modal-close-btn" aria-label="Đóng cửa sổ">
+          <svg class="icon" aria-hidden="true"><use href="#icon-close" /></svg>
+        </button>
+      </div>
+
+      <div class="modal-body" id="modal-body">
+        <!-- Bước 1 -->
+        <form id="checkout-form" class="checkout-step">
+          <div class="summary-strip">
+            <div>
+              <strong id="checkout-product-name">Tên gói</strong>
+              <span id="checkout-product-stock" class="summary-stock">Còn lại: 0</span>
+            </div>
+            <strong class="summary-unit-price" id="checkout-unit-price">0₫</strong>
+          </div>
+
+          <div class="form-group" id="checkout-variant-wrap" hidden>
+            <label for="checkout-variant-select">Chọn gói tài khoản</label>
+            <select id="checkout-variant-select" class="form-input"></select>
+          </div>
+
+          <div class="form-group">
+            <label for="checkout-qty">Số lượng mua</label>
+            <div class="qty-control">
+              <button type="button" class="qty-btn" id="checkout-qty-minus" aria-label="Giảm số lượng">
+                <svg class="icon" aria-hidden="true"><use href="#icon-minus" /></svg>
+              </button>
+              <input id="checkout-qty" type="number" class="qty-input" value="1" min="1" readonly aria-label="Số lượng" />
+              <button type="button" class="qty-btn" id="checkout-qty-plus" aria-label="Tăng số lượng">
+                <svg class="icon" aria-hidden="true"><use href="#icon-plus" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="checkout-contact">Email hoặc SĐT Zalo nhận hàng <span class="text-error">*</span></label>
+            <input
+              id="checkout-contact"
+              type="text"
+              class="form-input"
+              placeholder="Ví dụ: khachhang@gmail.com hoặc 0912345678"
+              autocomplete="email"
+              required
+            />
+            <p class="form-hint is-error" id="checkout-contact-error" hidden></p>
+            <p class="form-hint" style="color:#b45309;margin-top:0.35rem;">⚠️ Lưu ý: Vui lòng kiểm tra kỹ Email / SĐT Zalo trước khi thanh toán. Hệ thống gửi tự động theo thông tin bạn nhập, mọi trường hợp nhập sai dẫn đến thất lạc tài khoản Shop xin phép miễn trừ trách nhiệm.</p>
+          </div>
+
+          <div class="form-group">
+            <label for="checkout-voucher-input">Mã giảm giá / Voucher (Thử: <code>TANTHU10</code>, <code>VIP20</code>)</label>
+            <div class="voucher-row">
+              <input
+                id="checkout-voucher-input"
+                type="text"
+                class="form-input mono-text"
+                placeholder="Nhập mã giảm giá..."
+                autocomplete="off"
+              />
+              <button type="button" class="btn btn-ghost" id="checkout-voucher-btn">Áp dụng</button>
+            </div>
+            <p class="voucher-note" id="checkout-discount-note" hidden></p>
+          </div>
+
+          <div class="checkout-total-bar">
+            <span>Tổng thanh toán:</span>
+            <strong id="checkout-total-price">0₫</strong>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="checkout-create-btn">
+            <svg class="icon" aria-hidden="true"><use href="#icon-qr" /></svg>
+            <span>Tạo Mã VietQR Thanh Toán</span>
+          </button>
+        </form>
+
+        <!-- Bước 2 -->
+        <div id="checkout-qr-step" class="checkout-step" hidden>
+          <div class="qr-order-banner">
+            <div>
+              <span>Mã đơn hàng:</span>
+              <strong id="qr-order-code">ACC00000</strong>
+            </div>
+            <span class="qr-timer-pill" id="qr-countdown">15:00</span>
+          </div>
+
+          <div class="qr-layout">
+            <div class="qr-image-box">
+              <img id="vietqr-img" src="" alt="Mã QR thanh toán VietQR" loading="eager" />
+              <div id="vietqr-fallback-msg" class="qr-fallback-msg" hidden>
+                Không tải được ảnh QR tự động. Vui lòng dùng nút <strong>Copy</strong> Số tài khoản và Nội dung chuyển khoản bên cạnh.
+              </div>
+              <p class="qr-caption">Mở App Ngân hàng bất kỳ để quét mã</p>
+            </div>
+
+            <div class="bank-details">
+              <div class="copy-row">
+                <div>
+                  <span class="copy-label">Ngân hàng</span>
+                  <strong id="qr-bank-name">MB Bank</strong>
+                </div>
+              </div>
+              <div class="copy-row">
+                <div>
+                  <span class="copy-label">Số tài khoản</span>
+                  <strong id="qr-account-no" class="mono-text">---</strong>
+                </div>
+                <button type="button" class="copy-btn" data-copy-target="qr-account-no" data-copy-label="Số tài khoản">
+                  <svg class="icon" aria-hidden="true"><use href="#icon-copy" /></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="copy-row">
+                <div>
+                  <span class="copy-label">Số tiền</span>
+                  <strong id="qr-amount" class="text-primary">0₫</strong>
+                </div>
+                <button type="button" class="copy-btn" id="copy-amount-btn" data-copy-value="" data-copy-label="Số tiền">
+                  <svg class="icon" aria-hidden="true"><use href="#icon-copy" /></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+              <div class="copy-row is-highlight">
+                <div>
+                  <span class="copy-label">Nội dung chuyển khoản (Bắt buộc)</span>
+                  <strong id="qr-add-info" class="mono-text text-error">ACC00000</strong>
+                </div>
+                <button type="button" class="copy-btn" data-copy-target="qr-add-info" data-copy-label="Nội dung chuyển khoản">
+                  <svg class="icon" aria-hidden="true"><use href="#icon-copy" /></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <a id="payos-checkout-link" class="btn btn-primary btn-block" href="#" target="_blank" rel="noopener noreferrer" style="margin-bottom:0.5rem;" hidden>
+            <span>Mở trang thanh toán payOS</span>
+          </a>
+
+          <button type="button" class="btn btn-secondary btn-block" id="check-order-status-btn" style="margin-bottom:0.5rem;" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#icon-check" /></svg>
+            <span>Tôi đã thanh toán • Kiểm tra lại</span>
+          </button>
+
+          <button type="button" class="btn btn-secondary btn-block" id="simulate-paid-btn">
+            <svg class="icon" aria-hidden="true"><use href="#icon-check" /></svg>
+            <span>Giả lập đã thanh toán (Test)</span>
+          </button>
+        </div>
+
+        <!-- Bước 3 -->
+        <div id="checkout-success-step" class="checkout-step" hidden>
+          <div class="success-banner">
+            <div class="success-icon">
+              <svg class="icon icon-lg" aria-hidden="true"><use href="#icon-check" /></svg>
+            </div>
+            <div>
+              <h3>Thanh toán thành công!</h3>
+              <p>Đơn <strong id="delivered-order-code">ACC00000</strong> đã được lưu vào lịch sử tra cứu.</p>
+            </div>
+          </div>
+
+          <div class="credential-box">
+            <div class="credential-header">
+              <span>Thông tin tài khoản / Key (<code>user|pass</code>)</span>
+              <div class="credential-actions">
+                <button type="button" class="copy-btn" id="download-credentials-btn">
+                  <span>Tải .txt</span>
+                </button>
+                <button type="button" class="copy-btn" id="copy-all-credentials-btn">
+                  <svg class="icon" aria-hidden="true"><use href="#icon-copy" /></svg>
+                  <span>Copy tất cả</span>
+                </button>
+              </div>
+            </div>
+            <pre id="delivered-credentials" class="credential-pre"></pre>
+          </div>
+
+          <button type="button" class="btn btn-primary btn-block" id="success-done-btn">Hoàn tất &amp; Quay lại Cửa hàng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Floating Zalo Support Button -->
+  <a
+    class="floating-zalo-btn"
+    href="https://zalo.me"
+    target="_blank"
+    rel="noopener noreferrer"
+    title="Chat Zalo hỗ trợ"
+    aria-label="Chat Zalo hỗ trợ"
+  >
+    <svg viewBox="0 0 48 48" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M24 4C12.4 4 3 12.6 3 23.2c0 6.1 3.1 11.5 8 15.1-.3 2.3-1.4 5.1-1.5 5.3-.2.4.1.9.5.9.2 0 .4 0 .6-.1 2.9-1.1 6.3-2.9 8.1-4 1.7.4 3.5.6 5.3.6 11.6 0 21-8.6 21-19.2S35.6 4 24 4Z" fill="#ffffff" fill-opacity="0.18"/>
+      <text x="24" y="28" text-anchor="middle" fill="#ffffff" font-family="'Be Vietnam Pro', sans-serif" font-weight="800" font-size="15" letter-spacing="-0.4">Zalo</text>
+    </svg>
+  </a>
+
+  <script type="module" src="./js/services/authRefresh.js"></script>
+  <script type="module" src="./js/services/trafficSource.js"></script>
+  <script type="module" src="./js/services/imageUpload.js"></script>
+  <script type="module" src="./js/services/promoApi.js"></script>
+  <script type="module" src="./js/ui/uiAdminStats.js"></script>
+  <script type="module" src="./js/ui/uiAdminRender.js"></script>
+  <script type="module" src="./js/ui/uiAdmin.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
