@@ -420,6 +420,7 @@
           <div class="detail-specs-box">
             <div><span>Thời hạn gói:</span> <strong id="hero-duration">1 Tháng</strong></div>
             <div><span>Hình thức giao:</span> <strong id="detail-delivery-method">Tự động qua Web &amp; Lưu lịch sử</strong></div>
+            <div><span>Bảo hành:</span> <strong id="detail-warranty">Bảo hành 1 đổi 1 trọn kỳ</strong></div>
           </div>
 
           <div class="hero-actions" id="detail-sticky-bar">
@@ -812,6 +813,10 @@
                   <input id="admin-desc" type="text" class="form-input" placeholder="Tài khoản riêng • Bảo hành full thời gian" />
                 </div>
                 <div class="form-group">
+                  <label for="admin-warranty">Thời gian bảo hành</label>
+                  <input id="admin-warranty" type="text" class="form-input" placeholder="Ví dụ: Bảo hành 1 đổi 1 trọn kỳ" value="Bảo hành 1 đổi 1 trọn kỳ" />
+                </div>
+                <div class="form-group">
                   <label for="admin-image-url">Ảnh đại diện gói (Logo/Icon)</label>
                   <div class="admin-image-picker">
                     <div class="admin-image-preview" id="admin-image-preview">IMG</div>
@@ -1178,6 +1183,15 @@
               </div>
             </div>
             <pre id="delivered-credentials" class="credential-pre"></pre>
+          </div>
+
+          <div id="delivered-manual-contact" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;" hidden>
+            <a class="btn btn-secondary" style="flex:1;min-width:140px;" href="https://zalo.me/0373786203" target="_blank" rel="noopener noreferrer">
+              <span>Liên hệ Zalo (0373786203)</span>
+            </a>
+            <a class="btn btn-ghost" style="flex:1;min-width:140px;" href="https://t.me/Acc2Hand" target="_blank" rel="noopener noreferrer">
+              <span>Telegram (@Acc2Hand)</span>
+            </a>
           </div>
 
           <button type="button" class="btn btn-primary btn-block" id="success-done-btn">Hoàn tất &amp; Quay lại Cửa hàng</button>

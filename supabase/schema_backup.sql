@@ -24,6 +24,8 @@ ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS image_url text NOT NULL DEFAULT '';
 ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS manual_stocks jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS warranty text NOT NULL DEFAULT 'Bảo hành 1 đổi 1 trọn kỳ';
 
 CREATE TABLE IF NOT EXISTS public.inventory_keys (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

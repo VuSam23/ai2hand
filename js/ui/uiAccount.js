@@ -104,7 +104,7 @@ export function renderAccountView(profile, orders = [], defaultTab = 'overview')
         ? '<span class="acc-status-badge">Đang chờ cấp key</span>'
         : '<span class="acc-status-badge"><span class="pulse-dot" aria-hidden="true"></span>Đã bàn giao</span>';
       const credCell = isManual
-        ? '<span class="acc-order-sub">Đã nhận tiền • Admin đang xử lý thủ công</span>'
+        ? `<div class="acc-order-sub">Đã nhận tiền • Liên hệ <a href="https://zalo.me/0373786203" target="_blank" rel="noopener noreferrer">Zalo 0373786203</a> / <a href="https://t.me/Acc2Hand" target="_blank" rel="noopener noreferrer">Telegram @Acc2Hand</a> kèm mã <strong>#${escapeHtml(order.orderCode)}</strong> để kích hoạt ngay.</div>`
         : `<div class="acc-cred-pill">
               <code>${escapeHtml(credText)}</code>
               <button type="button" class="copy-btn" data-copy-raw="${escapeHtml(credText)}" title="Sao chép tài khoản">

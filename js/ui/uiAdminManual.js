@@ -3,7 +3,7 @@
  */
 import { fetchProducts } from '../services/supabaseApi.js';
 import { adminListOrders } from '../services/adminApi.js';
-import { adminUpdateManualStock, adminCompleteManualOrder } from '../services/adminManualApi.js';
+import { adminUpdateManualStock, adminCompleteManualOrder, adminUpdateWarranty } from '../services/adminManualApi.js';
 import { renderAdminOrders } from './uiAdminRender.js';
 import { showToast } from './uiCommon.js';
 
@@ -77,5 +77,19 @@ export async function handleCompleteManualOrder(btn) {
   } catch (err) {
     showToast(err.message || 'Không thể hoàn tất đơn thủ công.', 'error');
     btn.disabled = false;
+  }
+}
+
+export async function handleEditWarranty(btn, state, refreshCatalogUi) {
+  const cur = btn.dataset.warranty || 'Bảo hành 1 đổi 1 trọn kỳ';
+  const next = window.prompt('Nhập thời gian bảo hành cho gói sản phẩm:', cur);
+  if (next === null || !next.trim()) return;
+  try {
+    await adminUpdateWarranty(btn.dataset.id, next.trim());
+    state.products = await fetchProducts();
+    refreshCatalogUi();
+    showToast('Đã cập nhật thời gian bảo hành!', 'success');
+  } catch (err) {
+    showToast(err.message || 'Không thể cập nhật bảo hành.', 'error');
   }
 }

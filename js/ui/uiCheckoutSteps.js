@@ -70,11 +70,12 @@ export function syncCheckoutVariantUi(state, variantObj) {
     variantObj.price >= 1000 ? formatVnd(variantObj.price) : 'Chưa đặt giá';
 
   const deliveryNote = document.getElementById('checkout-delivery-note');
+  const showManualNote = variantObj.isManual || variantObj.accountType === 'Nâng cấp chính chủ';
   if (deliveryNote) {
-    deliveryNote.hidden = !variantObj.isManual;
-    if (variantObj.isManual) {
+    deliveryNote.hidden = !showManualNote;
+    if (showManualNote) {
       deliveryNote.textContent =
-        'Đây là gói cấp thủ công — Vui lòng để lại chính xác Email hoặc SĐT Zalo để Admin liên hệ cấp tài khoản sau khi hoàn tất thanh toán.';
+        'Với gói nâng cấp thủ công, sau khi thanh toán thành công quý khách vui lòng liên hệ Admin (Zalo / Telegram) kèm mã đơn để được hỗ trợ kích hoạt nhanh nhất.';
     }
   }
 
@@ -279,18 +280,16 @@ export function renderDeliveredStep(order) {
   }
   const isManualPending = String(order.status || '').toUpperCase() === 'PENDING_MANUAL';
   const boxTitle = document.getElementById('delivered-box-title');
-  if (boxTitle) {
-    boxTitle.innerHTML = isManualPending
-      ? 'Trạng thái đơn hàng (Chờ cấp thủ công)'
-      : 'Thông tin tài khoản / Key (<code>user|pass</code>)';
-  }
+  if (boxTitle) boxTitle.innerHTML = isManualPending ? 'Trạng thái đơn hàng (Chờ cấp thủ công)' : 'Thông tin tài khoản / Key (<code>user|pass</code>)';
   document.getElementById('delivered-order-code').textContent = order.orderCode;
   document.getElementById('delivered-credentials').textContent = isManualPending
-    ? `Đã thanh toán thành công!\nĐơn hàng đang chờ Admin liên hệ qua Email / Zalo (${order.contact || 'đã đăng ký'}) để cấp tài khoản thủ công.`
+    ? `Đã thanh toán thành công! Vui lòng liên hệ Admin qua Zalo (0373786203) hoặc Telegram (@Acc2Hand) kèm mã đơn #${order.orderCode} để được hỗ trợ kích hoạt nhanh nhất.`
     : (order.credentials || []).join('\n');
   const copyBtn = document.getElementById('copy-all-credentials-btn');
   const dlBtn = document.getElementById('download-credentials-btn');
+  const contactBox = document.getElementById('delivered-manual-contact');
   if (copyBtn) copyBtn.hidden = isManualPending;
   if (dlBtn) dlBtn.hidden = isManualPending;
+  if (contactBox) contactBox.hidden = !isManualPending;
   switchModalStep('success');
 }

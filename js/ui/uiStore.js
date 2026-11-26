@@ -135,11 +135,9 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
     ? `${product.category} • Cấp thủ công (Email / Zalo)`
     : product.tagline || product.duration;
   const deliveryEl = document.getElementById('detail-delivery-method');
-  if (deliveryEl) {
-    deliveryEl.textContent = isManual
-      ? 'Cấp thủ công • Admin giao key qua Email / Zalo sau khi thanh toán'
-      : 'Tự động qua Web & Lưu lịch sử';
-  }
+  if (deliveryEl) deliveryEl.textContent = isManual ? 'Cấp thủ công • Admin giao key qua Email / Zalo sau khi thanh toán' : 'Tự động qua Web & Lưu lịch sử';
+  const warEl = document.getElementById('detail-warranty');
+  if (warEl) warEl.textContent = product.warranty || 'Bảo hành 1 đổi 1 trọn kỳ';
   document.getElementById('hero-category').textContent = product.category;
   document.getElementById('hero-title').textContent = product.name;
   document.getElementById('hero-desc').textContent = product.description;
@@ -273,7 +271,7 @@ export function renderProductGrid(products) {
           </div>
           <div class="card-specs">
             <div class="card-spec-row"><span>Phiên bản:</span><strong>${escapeHtml(cheapest.label)} • ${escapeHtml(cheapest.accountType)}</strong></div>
-            <div class="card-spec-row"><span>Bảo hành:</span><strong class="text-primary">1 đổi 1 trọn kỳ</strong></div>
+            <div class="card-spec-row"><span>Bảo hành:</span><strong class="text-primary">${escapeHtml(item.warranty)}</strong></div>
           </div>
           <div class="card-footer">
             <div class="card-price-row">

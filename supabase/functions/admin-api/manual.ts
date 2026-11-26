@@ -69,5 +69,22 @@ export async function handleManualAction(
     return jsonRes({ ok: true, data: rows[0] });
   }
 
+  if (action === "update_warranty") {
+    const productId = String(payload.productId || "").trim();
+    const warranty = String(payload.warranty || "").trim() || "Bảo hành 1 đổi 1 trọn kỳ";
+    if (!productId) return jsonRes({ ok: false, error: "Thiếu productId." }, 400);
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/products?id=eq.${encodeURIComponent(productId)}`,
+      {
+        method: "PATCH",
+        headers: { ...svcHeaders, Prefer: "return=representation" },
+        body: JSON.stringify({ warranty }),
+      }
+    );
+    if (!res.ok) return jsonRes({ ok: false, error: await res.text() }, 400);
+    const data = await res.json();
+    return jsonRes({ ok: true, data: data[0] });
+  }
+
   return null;
 }

@@ -50,6 +50,9 @@ function sanitizeProductPayload(raw: Record<string, unknown>, idOverride?: strin
   if (raw.image_url !== undefined) {
     row.image_url = String(raw.image_url || "").trim();
   }
+  if (raw.warranty !== undefined && String(raw.warranty).trim()) {
+    row.warranty = String(raw.warranty).trim();
+  }
   row.is_active = raw.is_active !== undefined ? Boolean(raw.is_active) : true;
   return row;
 }

@@ -177,12 +177,13 @@ export function renderAdminView(products, orders = null, promos = null) {
         <div class="admin-stock-row">
           <div style="flex:1;min-width:220px;">
             <strong>${escapeHtml(p.name)}</strong>
-            <div class="section-subtitle">${escapeHtml(p.category)} • Giá từ ${formatVnd(p.price)}</div>
+            <div class="section-subtitle">${escapeHtml(p.category)} • Giá từ ${formatVnd(p.price)} • ${escapeHtml(p.warranty)}</div>
             <div style="display:flex;flex-direction:column;gap:0.3rem;margin-top:0.45rem;">${variantHtml}</div>
           </div>
           <div class="admin-stock-controls">
             <span class="card-stock ${stockClass}">Tổng kho: ${p.stock} key</span>
             <button type="button" class="btn btn-ghost" data-action="add-manual-variant" data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}">+ Biến thể / Thủ công</button>
+            <button type="button" class="btn btn-ghost" data-action="edit-warranty" data-id="${escapeHtml(p.id)}" data-warranty="${escapeHtml(p.warranty)}">Sửa bảo hành</button>
             <button type="button" class="btn btn-ghost" data-action="edit-price" data-id="${escapeHtml(p.id)}" data-price="${p.price}">Sửa giá gốc</button>
             <button type="button" class="btn ${isActive ? 'btn-secondary' : 'btn-ghost'}" data-action="toggle-active" data-id="${escapeHtml(p.id)}" data-active="${isActive}">
               ${isActive ? 'Đang bán' : 'Tạm ẩn'}

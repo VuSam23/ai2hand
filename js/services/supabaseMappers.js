@@ -31,6 +31,7 @@ export function normalizeProduct(row, stockInfoMap = new Map()) {
     variantStocks: isActive ? info.variants : {},
     variantPrices,
     manualStocks: isActive ? manualStocks : {},
+    warranty: String(row.warranty || '').trim() || 'Bảo hành 1 đổi 1 trọn kỳ',
     imageUrl: String(row.image_url || '').trim(),
     isActive,
     emblem: String(row.name || 'AC').slice(0, 2).toUpperCase(),

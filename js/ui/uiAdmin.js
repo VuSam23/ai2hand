@@ -18,7 +18,7 @@ import {
 } from '../services/adminApi.js';
 import { showToast, copyText } from './uiCommon.js';
 import { renderAdminOrders, renderAdminPromos, renderAdminView, syncImportPriceInput, switchAdminTab } from './uiAdminRender.js';
-import { handleEditManualStock, handleAddManualVariant, handleCompleteManualOrder } from './uiAdminManual.js';
+import { handleEditManualStock, handleAddManualVariant, handleCompleteManualOrder, handleEditWarranty } from './uiAdminManual.js';
 
 export { renderAdminOrders, renderAdminPromos, renderAdminView, switchAdminTab };
 
@@ -68,6 +68,7 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
         category: document.getElementById('admin-category').value,
         price: 0,
         description: document.getElementById('admin-desc').value,
+        warranty: document.getElementById('admin-warranty')?.value.trim() || 'Bảo hành 1 đổi 1 trọn kỳ',
         image_url: document.getElementById('admin-image-url')?.value.trim() || '',
       });
       state.products = await fetchProducts();
@@ -160,6 +161,9 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
 
     const addManualBtn = e.target.closest('[data-action="add-manual-variant"]');
     if (addManualBtn) return handleAddManualVariant(addManualBtn, state, refreshCatalogUi);
+
+    const warrantyBtn = e.target.closest('[data-action="edit-warranty"]');
+    if (warrantyBtn) return handleEditWarranty(warrantyBtn, state, refreshCatalogUi);
 
     const toggleBtn = e.target.closest('[data-action="toggle-active"]');
     if (toggleBtn) {

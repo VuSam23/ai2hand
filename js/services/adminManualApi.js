@@ -37,3 +37,7 @@ export function adminUpdateManualStock(productId, variantKey, manualStock, price
 export function adminCompleteManualOrder(orderCode, credential) {
   return callManualAdmin('complete_manual_order', { orderCode, credential });
 }
+
+export function adminUpdateWarranty(productId, warranty) {
+  return callManualAdmin('update_warranty', { productId, warranty });
+}
