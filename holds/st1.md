@@ -1,17 +1,3 @@
-Hệ thống lõi của **ai2hand** (bảo mật tạo đơn, tự động nhả nhiều key, báo đơn qua Telegram, thống kê Admin) đã xong. Từ giờ bạn không nên code thêm tính năng rườm rà nữa mà tập trung đưa web ra nhận tiền thật theo 3 chặng gọn sau:
-
-### Chặng 1: Chốt hạ kỹ thuật để nhận tiền thật (Làm ngay — ~15 phút)
-
-1. **Điền tài khoản ngân hàng thật vào `js/config.js`:** Hiện khung QR vẫn đang hiện `[MA_NGAN_HANG]` và `[SO_TAI_KHOAN]`. Bạn mở `js/config.js`, điền đúng mã ngân hàng (`MB`, `VCB`, `TCB`, `ACB`...), số tài khoản và tên chủ tài khoản để web sinh ảnh mã VietQR thật.
-2. **Nối biến động số dư ngân hàng (SePay hoặc Casso) vào `payment-webhook`:**
-
-- Đăng ký tài khoản miễn phí trên **SePay.vn** (hoặc Casso), liên kết tài khoản ngân hàng nhận tiền.
-- Dán URL Webhook của Supabase (`https://<PROJECT_REF>.supabase.co/functions/v1/payment-webhook`) và mã `WEBHOOK_SECRET` vào cấu hình của SePay/Casso để mỗi khi tiền vào tài khoản, SePay tự động gọi Supabase nhả key ngay lập tức.
-
-3. **Test 1 giao dịch thật 2.000đ:** Tạo một gói test hoặc mã giảm giá đưa đơn về `2.000đ`, dùng app ngân hàng quét mã QR chuyển khoản thật để nghiệm thu trọn vẹn vòng khép kín: _Tiền vào → Web tự hiện key → Telegram `@ai2hand_notify_bot` ting ting → Tab Thống kê Admin nhảy số_.
-
----
-
 ### Chặng 2: Đóng gói thương hiệu `ai2hand` & Đưa lên tên miền thật
 
 1. **Đồng bộ nhận diện `ai2hand` & Thẻ chia sẻ MXH:** Cập nhật tên **AI2Hand**, mô tả ngắn gọn và các thẻ Open Graph (`og:title`, `og:description`, `og:image`) trong `index.html` để khi bạn dán link web lên TikTok, Facebook hay Zalo nó hiện ảnh bìa và tiêu đề chuyên nghiệp.
