@@ -58,10 +58,7 @@ export const ACCOUNT_TYPES = [
   },
 ];
 
-export const VOUCHERS = {
-  TANTHU10: { code: 'TANTHU10', rate: 0.1, label: 'Giảm 10% Tân thủ' },
-  VIP20: { code: 'VIP20', rate: 0.2, label: 'Giảm 20% Khách VIP' },
-};
+export const VOUCHERS = {};
 
 export const STORAGE_KEYS = {
   ORDERS: 'digitrust_orders_v1',

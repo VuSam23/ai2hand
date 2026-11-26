@@ -92,14 +92,13 @@ async function fetchStockCounts() {
 }
 
 export async function fetchProducts() {
-  if (!isSupabaseConfigured()) return mockApi.fetchProducts();
+  if (!isSupabaseConfigured()) return [];
   try {
     const [rows, stockInfoMap] = await Promise.all([supabaseFetch('/products?select=*'), fetchStockCounts()]);
-    if (Array.isArray(rows) && rows.length > 0) return rows.map((r) => normalizeProduct(r, stockInfoMap));
-    return mockApi.fetchProducts();
+    return Array.isArray(rows) ? rows.map((r) => normalizeProduct(r, stockInfoMap)) : [];
   } catch (err) {
-    console.warn('[Fallback -> mockApi.fetchProducts]', err.message);
-    return mockApi.fetchProducts();
+    console.warn('[fetchProducts Error]', err.message);
+    return [];
   }
 }
 
@@ -195,51 +194,32 @@ export function pollOrderStatus(orderCode, onPaid, intervalMs = 3000) {
 export async function confirmPaymentAndDeliver(orderCode) {
   stopOrderPolling();
   if (isSupabaseConfigured()) {
-    try {
-      const remoteOrder = await fetchOwnOrderByCode(orderCode);
-      if (remoteOrder?.status === 'PAID' && remoteOrder.credentials.length > 0) {
-        remotePendingOrders.delete(orderCode);
-        saveCompletedOrderToLocal(remoteOrder);
-        return remoteOrder;
-      }
-    } catch {
-      // Nhánh test local
-    }
-    const draft = remotePendingOrders.get(orderCode);
-    if (draft) {
-      const demoCreds = Array.from({ length: draft.quantity }, (_, idx) => {
-        const rand = Math.floor(1000 + Math.random() * 9000);
-        return `${draft.productId}.${orderCode.toLowerCase()}.${idx + 1}@ai2hand.vn|Pass#${rand}Vip`;
-      });
-      const simulated = { ...draft, status: 'PAID', paidAt: new Date().toISOString(), credentials: demoCreds };
+    const remoteOrder = await fetchOwnOrderByCode(orderCode);
+    if (
+      (remoteOrder?.status === 'PAID' && remoteOrder.credentials.length > 0) ||
+      remoteOrder?.status === 'PENDING_MANUAL'
+    ) {
       remotePendingOrders.delete(orderCode);
-      saveCompletedOrderToLocal(simulated);
-      return simulated;
+      saveCompletedOrderToLocal(remoteOrder);
+      return remoteOrder;
     }
+    throw new Error('Hệ thống chưa ghi nhận giao dịch thanh toán cho đơn này.');
   }
   return mockApi.confirmPaymentAndDeliver(orderCode);
 }
 
 export async function lookupOrders(query = '') {
-  const localHistory = await mockApi.lookupOrders(query);
-  if (!isSupabaseConfigured()) return localHistory;
+  if (!isSupabaseConfigured()) return mockApi.lookupOrders(query);
   const session = await getFreshUserSession();
-  if (!session?.userId || !session?.accessToken) return localHistory;
+  if (!session?.userId || !session?.accessToken) return [];
   try {
     const rows = await supabaseFetch(
       `/orders?user_id=eq.${encodeURIComponent(session.userId)}&status=in.(paid,pending_manual)&order=created_at.desc&limit=30`,
       { headers: { Authorization: `Bearer ${session.accessToken}` } }
     );
-    if (Array.isArray(rows) && rows.length > 0) {
-      const merged = rows.map(normalizeOrder);
-      localHistory.forEach((loc) => {
-        if (!merged.some((r) => r.orderCode === loc.orderCode)) merged.push(loc);
-      });
-      return merged;
-    }
-    return localHistory;
+    return Array.isArray(rows) ? rows.map(normalizeOrder) : [];
   } catch {
-    return localHistory;
+    return [];
   }
 }
 
