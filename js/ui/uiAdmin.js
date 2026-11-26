@@ -18,7 +18,7 @@ import {
 } from '../services/adminApi.js';
 import { showToast, copyText } from './uiCommon.js';
 import { renderAdminOrders, renderAdminPromos, renderAdminView, syncImportPriceInput, switchAdminTab } from './uiAdminRender.js';
-import { handleEditManualStock } from './uiAdminManual.js';
+import { handleEditManualStock, handleAddManualVariant, handleCompleteManualOrder } from './uiAdminManual.js';
 
 export { renderAdminOrders, renderAdminPromos, renderAdminView, switchAdminTab };
 
@@ -158,6 +158,9 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
     const editManualBtn = e.target.closest('[data-action="edit-manual-stock"]');
     if (editManualBtn) return handleEditManualStock(editManualBtn, state, refreshCatalogUi);
 
+    const addManualBtn = e.target.closest('[data-action="add-manual-variant"]');
+    if (addManualBtn) return handleAddManualVariant(addManualBtn, state, refreshCatalogUi);
+
     const toggleBtn = e.target.closest('[data-action="toggle-active"]');
     if (toggleBtn) {
       toggleBtn.disabled = true;
@@ -211,7 +214,9 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
 
   document.getElementById('admin-orders-list')?.addEventListener('click', (e) => {
     const copyBtn = e.target.closest('[data-copy-raw]');
-    if (copyBtn) copyText(copyBtn.dataset.copyRaw, 'tài khoản', copyBtn);
+    if (copyBtn) return copyText(copyBtn.dataset.copyRaw, 'tài khoản', copyBtn);
+    const completeBtn = e.target.closest('[data-action="complete-manual-order"]');
+    if (completeBtn) handleCompleteManualOrder(completeBtn);
   });
 
   document.getElementById('admin-promo-form')?.addEventListener('submit', async (e) => {

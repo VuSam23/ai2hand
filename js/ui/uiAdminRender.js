@@ -61,6 +61,7 @@ export function renderAdminOrders(orders = []) {
           </div>
           <div class="admin-stock-controls">
             <span class="card-stock ${isPaid ? '' : 'is-low'}">${statusText}</span>
+            ${isManual ? `<button type="button" class="btn btn-secondary" data-action="complete-manual-order" data-order-code="${escapeHtml(code)}">Giao key / Hoàn tất</button>` : ''}
             ${isPaid && cred ? `<button type="button" class="copy-btn" data-copy-raw="${escapeHtml(cred)}">Copy key</button>` : ''}
           </div>
         </div>
@@ -181,6 +182,7 @@ export function renderAdminView(products, orders = null, promos = null) {
           </div>
           <div class="admin-stock-controls">
             <span class="card-stock ${stockClass}">Tổng kho: ${p.stock} key</span>
+            <button type="button" class="btn btn-ghost" data-action="add-manual-variant" data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}">+ Biến thể / Thủ công</button>
             <button type="button" class="btn btn-ghost" data-action="edit-price" data-id="${escapeHtml(p.id)}" data-price="${p.price}">Sửa giá gốc</button>
             <button type="button" class="btn ${isActive ? 'btn-secondary' : 'btn-ghost'}" data-action="toggle-active" data-id="${escapeHtml(p.id)}" data-active="${isActive}">
               ${isActive ? 'Đang bán' : 'Tạm ẩn'}

@@ -226,5 +226,58 @@ export async function lookupOrders(query = '') {
   }
 }
 
-export const getUserProfile = mockApi.getUserProfile;
-export const updateUserProfile = mockApi.updateUserProfile;
+export async function getUserProfile() {
+  const local = await mockApi.getUserProfile();
+  if (!isSupabaseConfigured()) return local;
+  const session = await getFreshUserSession();
+  if (!session?.accessToken) return local;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`${getSupabaseOrigin()}/auth/v1/user`, {
+      signal: controller.signal,
+      headers: { apikey: SUPABASE_CONFIG.publishableKey.trim(), Authorization: `Bearer ${session.accessToken}` },
+    });
+    if (!res.ok) return local;
+    const user = await res.json().catch(() => null);
+    const meta = user?.user_metadata || {};
+    const merged = {
+      ...local,
+      name: String(meta.full_name || meta.name || local.name || session.name || '').trim(),
+      email: String(user?.email || session.email || local.email || '').trim(),
+      phone: String(meta.phone || local.phone || '').trim(),
+      joinedAt: user?.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : local.joinedAt,
+    };
+    await mockApi.updateUserProfile(merged);
+    return merged;
+  } catch {
+    return local;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function updateUserProfile(payload) {
+  const updated = await mockApi.updateUserProfile(payload);
+  if (!isSupabaseConfigured()) return updated;
+  const session = await getFreshUserSession();
+  if (!session?.accessToken) return updated;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`${getSupabaseOrigin()}/auth/v1/user`, {
+      method: 'PUT',
+      signal: controller.signal,
+      headers: {
+        apikey: SUPABASE_CONFIG.publishableKey.trim(),
+        Authorization: `Bearer ${session.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ data: { full_name: updated.name, phone: updated.phone } }),
+    });
+    if (!res.ok) throw new Error('Không thể đồng bộ hồ sơ lên máy chủ.');
+  } finally {
+    clearTimeout(timer);
+  }
+  return updated;
+}

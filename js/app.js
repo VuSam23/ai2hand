@@ -9,7 +9,7 @@ import {
 } from './services/adminApi.js';
 import { showToast } from './ui/uiCommon.js';
 import { renderCategories, renderProductDetail, renderProductGrid, getCheapestVariant } from './ui/uiStore.js';
-import { openCheckoutModal, closeCheckoutModal, bindCheckoutEvents } from './ui/uiCheckout.js';
+import { openCheckoutModal, closeCheckoutModal, bindCheckoutEvents, handlePaymentReturnUrl } from './ui/uiCheckout.js';
 import {
   syncAuthNavUi,
   renderAccountView,
@@ -45,13 +45,14 @@ function matchPriceRange(price, range) {
 
 function getFilteredProducts() {
   const query = state.searchQuery.trim().toLowerCase();
+  const displayPrice = (item) => getCheapestVariant(item).price || item.price;
   const filtered = state.products.filter((item) => {
     const matchCat = state.activeCategory === 'Tất cả' || item.category === state.activeCategory;
     const matchQ = !query || item.name.toLowerCase().includes(query) || item.category.toLowerCase().includes(query);
-    return matchCat && matchQ && matchPriceRange(item.price, state.priceRange);
+    return matchCat && matchQ && matchPriceRange(displayPrice(item), state.priceRange);
   });
-  if (state.sortBy === 'price_asc') return [...filtered].sort((a, b) => a.price - b.price);
-  if (state.sortBy === 'price_desc') return [...filtered].sort((a, b) => b.price - a.price);
+  if (state.sortBy === 'price_asc') return [...filtered].sort((a, b) => displayPrice(a) - displayPrice(b));
+  if (state.sortBy === 'price_desc') return [...filtered].sort((a, b) => displayPrice(b) - displayPrice(a));
   return filtered;
 }
 
@@ -288,6 +289,7 @@ async function initApp() {
     if (hash === 'admin' || hash === 'admin-login' || hash === 'account') {
       switchView(hash);
     }
+    await handlePaymentReturnUrl({ switchView, refreshAccountData });
   } catch {
     showToast('Không thể tải dữ liệu cửa hàng.', 'error');
   }

@@ -64,7 +64,10 @@ export function renderAccountView(profile, orders = [], defaultTab = 'overview')
   document.getElementById('acc-nav-orders')?.classList.toggle('is-active', showOrders);
   document.getElementById('acc-nav-profile')?.classList.remove('is-active');
 
-  const paidOrders = orders.filter((o) => String(o.status || 'PAID').toUpperCase() === 'PAID');
+  const paidOrders = orders.filter((o) => {
+    const st = String(o.status || 'PAID').toUpperCase();
+    return st === 'PAID' || st === 'PENDING_MANUAL';
+  });
   const totalPaidAmount = paidOrders.reduce((sum, item) => sum + (Number(item.totalAmount) || 0), 0);
   const totalKeys = paidOrders.reduce(
     (sum, item) =>

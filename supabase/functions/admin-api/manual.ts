@@ -5,35 +5,69 @@ export async function handleManualAction(
   svcHeaders: Record<string, string>,
   jsonRes: (body: unknown, status?: number) => Response
 ): Promise<Response | null> {
-  if (action !== "update_manual_stock") return null;
+  if (action === "update_manual_stock") {
+    const productId = String(payload.productId || "").trim();
+    const variantKey = String(payload.variantKey || "").trim();
+    const manualStock = Math.max(0, Math.round(Number(payload.manualStock) || 0));
+    const nextPrice = Math.round(Number(payload.price) || 0);
+    if (!productId || !variantKey) {
+      return jsonRes({ ok: false, error: "Thiếu productId hoặc biến thể cần cấu hình." }, 400);
+    }
 
-  const productId = String(payload.productId || "").trim();
-  const variantKey = String(payload.variantKey || "").trim();
-  const manualStock = Math.max(0, Math.round(Number(payload.manualStock) || 0));
-  if (!productId || !variantKey) {
-    return jsonRes({ ok: false, error: "Thiếu productId hoặc biến thể cần cấu hình." }, 400);
+    const curRes = await fetch(
+      `${supabaseUrl}/rest/v1/products?id=eq.${encodeURIComponent(productId)}&select=manual_stocks,variant_prices&limit=1`,
+      { headers: svcHeaders }
+    );
+    const curRows = curRes.ok ? await curRes.json() : [];
+    const curManual = (Array.isArray(curRows) && curRows[0]?.manual_stocks) || {};
+    const curPrices = (Array.isArray(curRows) && curRows[0]?.variant_prices) || {};
+
+    const nextManual: Record<string, number> = { ...curManual };
+    if (manualStock > 0) nextManual[variantKey] = manualStock;
+    else delete nextManual[variantKey];
+
+    const patchBody: Record<string, unknown> = { manual_stocks: nextManual };
+    if (nextPrice >= 1000) {
+      const nextPrices = { ...curPrices, [variantKey]: nextPrice };
+      const vals = Object.values(nextPrices).map((v) => Number(v) || 0).filter((v) => v >= 1000);
+      patchBody.variant_prices = nextPrices;
+      if (vals.length > 0) patchBody.price = Math.min(...vals);
+    }
+
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/products?id=eq.${encodeURIComponent(productId)}`,
+      {
+        method: "PATCH",
+        headers: { ...svcHeaders, Prefer: "return=representation" },
+        body: JSON.stringify(patchBody),
+      }
+    );
+    if (!res.ok) return jsonRes({ ok: false, error: await res.text() }, 400);
+    const data = await res.json();
+    return jsonRes({ ok: true, data: data[0] });
   }
 
-  const curRes = await fetch(
-    `${supabaseUrl}/rest/v1/products?id=eq.${encodeURIComponent(productId)}&select=manual_stocks&limit=1`,
-    { headers: svcHeaders }
-  );
-  const curRows = curRes.ok ? await curRes.json() : [];
-  const curMap = (Array.isArray(curRows) && curRows[0]?.manual_stocks) || {};
-  const nextMap: Record<string, number> = { ...curMap };
-  if (manualStock > 0) nextMap[variantKey] = manualStock;
-  else delete nextMap[variantKey];
-
-  const res = await fetch(
-    `${supabaseUrl}/rest/v1/products?id=eq.${encodeURIComponent(productId)}`,
-    {
-      method: "PATCH",
-      headers: { ...svcHeaders, Prefer: "return=representation" },
-      body: JSON.stringify({ manual_stocks: nextMap }),
+  if (action === "complete_manual_order") {
+    const orderCode = String(payload.orderCode || "").trim();
+    const credential = String(payload.credential || "").trim();
+    if (!orderCode || !credential) {
+      return jsonRes({ ok: false, error: "Thiếu mã đơn hoặc nội dung bàn giao cho khách." }, 400);
     }
-  );
-  if (!res.ok) return jsonRes({ ok: false, error: await res.text() }, 400);
-  const data = await res.json();
-  return jsonRes({ ok: true, data: data[0] });
-}
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/orders?order_code=eq.${encodeURIComponent(orderCode)}&status=eq.pending_manual`,
+      {
+        method: "PATCH",
+        headers: { ...svcHeaders, Prefer: "return=representation" },
+        body: JSON.stringify({ status: "paid", delivered_credential: credential }),
+      }
+    );
+    if (!res.ok) return jsonRes({ ok: false, error: await res.text() }, 400);
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return jsonRes({ ok: false, error: "Đơn hàng không ở trạng thái chờ cấp thủ công." }, 400);
+    }
+    return jsonRes({ ok: true, data: rows[0] });
+  }
 
+  return null;
+}

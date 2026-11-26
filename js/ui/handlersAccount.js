@@ -81,7 +81,7 @@ export function bindAccountAndAdminEvents({
     if (warrantyBtn) {
       const msg = `Yêu cầu bảo hành 1:1 đơn #${warrantyBtn.dataset.orderCode} - Gói: ${warrantyBtn.dataset.productName}`;
       await copyText(msg, 'nội dung bảo hành (Hãy dán vào Zalo hỗ trợ)', warrantyBtn);
-      window.open('https://zalo.me', '_blank', 'noopener,noreferrer');
+      window.open('https://zalo.me/0373786203', '_blank', 'noopener,noreferrer');
       return;
     }
 

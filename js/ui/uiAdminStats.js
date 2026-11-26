@@ -6,9 +6,14 @@ import { formatVnd, escapeHtml } from './uiCommon.js';
 function countLowStockItems(products = []) {
   let count = 0;
   products.forEach((p) => {
-    const vs = Object.values(p.variantStocks || {});
-    if (vs.length > 0) count += vs.filter((qty) => Number(qty) <= 2).length;
-    else if (Number(p.stock) <= 2) count += 1;
+    const vs = p.variantStocks || {};
+    const ms = p.manualStocks || {};
+    const keys = [...new Set([...Object.keys(vs), ...Object.keys(ms)])];
+    if (keys.length > 0) {
+      count += keys.filter((k) => Number(vs[k] || 0) + Number(ms[k] || 0) <= 2).length;
+    } else if (Number(p.stock) <= 2) {
+      count += 1;
+    }
   });
   return count;
 }
@@ -36,7 +41,11 @@ export function renderAdminStats(products = [], orders = []) {
 
   const list = Array.isArray(orders) ? orders : [];
   const todayStr = new Date().toLocaleDateString('en-CA');
-  const paidOrders = list.filter((o) => String(o.status || '').toLowerCase() === 'paid');
+  const isCollected = (o) => {
+    const st = String(o.status || '').toLowerCase();
+    return st === 'paid' || st === 'pending_manual';
+  };
+  const paidOrders = list.filter(isCollected);
   const totalRevenue = paidOrders.reduce((s, o) => s + (Number(o.amount ?? o.totalAmount) || 0), 0);
   const todayRevenue = paidOrders
     .filter((o) => o.created_at && new Date(o.created_at).toLocaleDateString('en-CA') === todayStr)
@@ -68,7 +77,7 @@ export function renderAdminStats(products = [], orders = []) {
 
   list.forEach((o) => {
     const src = o.traffic_source || 'Direct';
-    const isPaid = String(o.status || '').toLowerCase() === 'paid';
+    const isPaid = isCollected(o);
     const amt = isPaid ? Number(o.amount ?? o.totalAmount) || 0 : 0;
     const curSrc = srcMap.get(src) || { orders: 0, rev: 0 };
     curSrc.orders += 1;

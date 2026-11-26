@@ -66,7 +66,8 @@ export function syncCheckoutVariantUi(state, variantObj) {
       : variantObj.isManual
         ? `Còn lại: ${availStock} suất (Cấp thủ công)`
         : `Còn lại: ${availStock} tài khoản`;
-  document.getElementById('checkout-unit-price').textContent = formatVnd(variantObj.price);
+  document.getElementById('checkout-unit-price').textContent =
+    variantObj.price >= 1000 ? formatVnd(variantObj.price) : 'Chưa đặt giá';
 
   const deliveryNote = document.getElementById('checkout-delivery-note');
   if (deliveryNote) {
@@ -94,6 +95,7 @@ export function calculateCheckoutTotal(state) {
   const qtyInput = document.getElementById('checkout-qty');
   const qty = Math.max(1, Number.parseInt(qtyInput?.value, 10) || 1);
   const unitPrice = state.checkoutVariant?.price || state.checkoutProduct.price;
+  if (unitPrice < 1000) return 0;
   const subTotal = unitPrice * qty;
   const discount = calculatePromoDiscount(state.activeVoucher, subTotal);
   return Math.max(1000, subTotal - discount);
@@ -276,6 +278,12 @@ export function renderDeliveredStep(order) {
     qrTimerInterval = null;
   }
   const isManualPending = String(order.status || '').toUpperCase() === 'PENDING_MANUAL';
+  const boxTitle = document.getElementById('delivered-box-title');
+  if (boxTitle) {
+    boxTitle.innerHTML = isManualPending
+      ? 'Trạng thái đơn hàng (Chờ cấp thủ công)'
+      : 'Thông tin tài khoản / Key (<code>user|pass</code>)';
+  }
   document.getElementById('delivered-order-code').textContent = order.orderCode;
   document.getElementById('delivered-credentials').textContent = isManualPending
     ? `Đã thanh toán thành công!\nĐơn hàng đang chờ Admin liên hệ qua Email / Zalo (${order.contact || 'đã đăng ký'}) để cấp tài khoản thủ công.`

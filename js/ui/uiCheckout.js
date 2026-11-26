@@ -233,3 +233,35 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
     if (text) downloadTextFile(`${code}-accounts.txt`, text);
   });
 }
+
+export async function handlePaymentReturnUrl({ switchView, refreshAccountData }) {
+  const params = new URLSearchParams(window.location.search || '');
+  const payment = params.get('payment');
+  const orderCode = (params.get('order') || '').trim();
+  if (!payment && !orderCode) return;
+  window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+  if (payment === 'cancel') {
+    showToast(orderCode ? `Bạn đã hủy thanh toán đơn #${orderCode}.` : 'Bạn đã hủy thanh toán.', 'info');
+    return;
+  }
+  if (payment === 'success' && orderCode) {
+    try {
+      const order = await fetchOwnOrderByCode(orderCode);
+      if ((order?.status === 'PAID' && order.credentials.length > 0) || order?.status === 'PENDING_MANUAL') {
+        await refreshAccountData();
+        const modal = document.getElementById('checkout-modal');
+        if (modal) {
+          modal.hidden = false;
+          document.body.style.overflow = 'hidden';
+        }
+        renderDeliveredStep(order);
+        showToast(`Đơn #${orderCode} đã thanh toán thành công!`, 'success');
+        return;
+      }
+    } catch {
+      // Chờ webhook cập nhật
+    }
+    switchView('my-orders');
+    showToast(`Đơn #${orderCode} đang được xác nhận. Vui lòng kiểm tra lại sau vài giây.`, 'info');
+  }
+}

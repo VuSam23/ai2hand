@@ -1,11 +1,11 @@
 /**
- * js/services/adminManualApi.js — Tầng 2: Cấu hình cấp thủ công theo biến thể qua admin-api
+ * js/services/adminManualApi.js — Tầng 2: Cấu hình cấp thủ công & hoàn tất đơn thủ công qua admin-api
  */
 import { SUPABASE_CONFIG, isSupabaseConfigured } from '../config/config.js';
 import { readSession } from './authRefresh.js';
 
-export async function adminUpdateManualStock(productId, variantKey, manualStock) {
-  if (!isSupabaseConfigured()) throw new Error('Cấu hình cấp thủ công chỉ hỗ trợ khi kết nối Supabase.');
+async function callManualAdmin(action, payload) {
+  if (!isSupabaseConfigured()) throw new Error('Tính năng này chỉ hỗ trợ khi kết nối Supabase.');
   const session = readSession();
   if (!session?.accessToken) throw new Error('Phiên Admin đã hết hạn.');
   const fnUrl = `${SUPABASE_CONFIG.restUrl.replace(/\/rest\/v1\/?$/, '')}/functions/v1/admin-api`;
@@ -20,13 +20,20 @@ export async function adminUpdateManualStock(productId, variantKey, manualStock)
         Authorization: `Bearer ${session.accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action: 'update_manual_stock', payload: { productId, variantKey, manualStock } }),
+      body: JSON.stringify({ action, payload }),
     });
     const body = await res.json().catch(() => ({}));
-    if (!res.ok || !body?.ok) throw new Error(body?.error || 'Không thể cập nhật cấu hình cấp thủ công.');
+    if (!res.ok || !body?.ok) throw new Error(body?.error || 'Thao tác Admin thất bại.');
     return body.data;
   } finally {
     clearTimeout(timer);
   }
 }
 
+export function adminUpdateManualStock(productId, variantKey, manualStock, price = 0) {
+  return callManualAdmin('update_manual_stock', { productId, variantKey, manualStock, price });
+}
+
+export function adminCompleteManualOrder(orderCode, credential) {
+  return callManualAdmin('complete_manual_order', { orderCode, credential });
+}
