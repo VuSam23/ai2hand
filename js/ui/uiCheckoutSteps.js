@@ -32,8 +32,6 @@ function buildCheckoutVariants(product) {
     const [label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label] = key.split('|');
     return resolveCheckoutVariant(product, label, accountType);
   });
-  const pricedInStock = entries.filter((v) => v.stock > 0 && v.price >= 1000);
-  if (pricedInStock.length > 0) return pricedInStock;
   return entries.filter((v) => v.stock > 0);
 }
 

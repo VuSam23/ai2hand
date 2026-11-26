@@ -66,6 +66,9 @@ async function fetchStockCounts() {
   try {
     const rpcRows = await supabaseFetch('/rpc/get_product_stocks', { method: 'POST', body: '{}' });
     if (Array.isArray(rpcRows)) {
+      if (rpcRows.some((r) => r.duration === undefined && r.account_type === undefined)) {
+        console.warn('[RPC get_product_stocks] Thiếu cột duration/account_type — cần cập nhật RPC trên Supabase.');
+      }
       rpcRows.forEach((r) =>
         addVariantCount(
           stockInfoMap,

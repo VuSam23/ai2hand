@@ -169,7 +169,7 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
   if (durationWrap) {
     const availDurations = variants
       .map((v, idx) => ({ ...v, idx }))
-      .filter((v) => v.anyStock && v.price >= 1000);
+      .filter((v) => v.anyStock);
     durationWrap.innerHTML =
       availDurations.length > 0
         ? availDurations
