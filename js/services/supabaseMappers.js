@@ -7,10 +7,8 @@ export function addVariantCount(stockInfoMap, pid, duration, accountType, count)
   if (!pid || count <= 0) return;
   const current = stockInfoMap.get(pid) || { total: 0, variants: {} };
   current.total += count;
-  if (duration || accountType) {
-    const key = `${String(duration || '1 Tháng').trim()}|${String(accountType || 'Tài khoản riêng').trim()}`;
-    current.variants[key] = (current.variants[key] || 0) + count;
-  }
+  const key = `${String(duration || '1 Tháng').trim()}|${String(accountType || 'Tài khoản riêng').trim()}`;
+  current.variants[key] = (current.variants[key] || 0) + count;
   stockInfoMap.set(pid, current);
 }
 
@@ -53,12 +51,12 @@ export function getVariantStock(product, duration = '1 Tháng', accountType = 'T
   if (manualQty > 0) return manualQty;
   if (product.stock === 0) return 0;
   const variants = product.variantStocks || {};
-  const hasVariantMap =
-    Object.keys(variants).length > 0 ||
-    Object.keys(product.manualStocks || {}).length > 0 ||
-    Object.keys(product.variantPrices || {}).length > 0;
-  if (!hasVariantMap) return product.stock;
-  return Number(variants[key] || 0);
+  const hasStockMap =
+    Object.keys(variants).length > 0 || Object.keys(product.manualStocks || {}).length > 0;
+  if (hasStockMap) return Number(variants[key] || 0);
+  const defDur = product.duration || '1 Tháng';
+  const defType = product.accountType || 'Tài khoản riêng';
+  return duration === defDur && accountType === defType ? Number(product.stock) || 0 : 0;
 }
 
 export function buildPayosQrImgUrl(qrCode = '') {
