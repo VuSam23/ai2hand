@@ -205,10 +205,18 @@
     right: 16px;
     bottom: calc(74px + env(safe-area-inset-bottom));
   }
+  .floating-telegram-btn {
+    right: 16px;
+    bottom: calc(134px + env(safe-area-inset-bottom));
+  }
 
   body.is-detail-view .floating-zalo-btn,
   body:has(#view-product-detail:not([hidden])) .floating-zalo-btn {
     bottom: calc(132px + env(safe-area-inset-bottom));
+  }
+  body.is-detail-view .floating-telegram-btn,
+  body:has(#view-product-detail:not([hidden])) .floating-telegram-btn {
+    bottom: calc(192px + env(safe-area-inset-bottom));
   }
 }
 

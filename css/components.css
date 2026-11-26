@@ -161,3 +161,29 @@
 .floating-zalo-btn:active {
   transform: scale(0.95);
 }
+
+/* Floating Telegram Action Button */
+.floating-telegram-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 84px;
+  z-index: 90;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: #229ed9;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: 0 8px 20px rgba(34, 158, 217, 0.35), 0 0 0 3px rgba(255, 255, 255, 0.9);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, bottom 0.2s ease;
+}
+.floating-telegram-btn:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 12px 24px rgba(34, 158, 217, 0.45), 0 0 0 4px #ffffff;
+}
+.floating-telegram-btn:active {
+  transform: scale(0.95);
+}
