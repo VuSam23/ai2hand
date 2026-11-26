@@ -26,15 +26,25 @@ function buildCheckoutVariants(product) {
       ...Object.keys(product?.manualStocks || {}),
     ]),
   ];
-  const entries = allKeys
-    .map((key) => {
-      const [label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label] = key.split('|');
-      const v = resolveCheckoutVariant(product, label, accountType);
-      return v.price >= 1000 ? v : null;
-    })
-    .filter(Boolean);
-  if (entries.length > 0) return entries;
-  return [resolveCheckoutVariant(product, product?.duration || '1 Tháng', ACCOUNT_TYPES[0].label)];
+  const keys =
+    allKeys.length > 0 ? allKeys : [`${product?.duration || '1 Tháng'}|${ACCOUNT_TYPES[0].label}`];
+  const entries = keys.map((key) => {
+    const [label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label] = key.split('|');
+    return resolveCheckoutVariant(product, label, accountType);
+  });
+  const pricedInStock = entries.filter((v) => v.stock > 0 && v.price >= 1000);
+  if (pricedInStock.length > 0) return pricedInStock;
+  return entries.filter((v) => v.stock > 0);
+}
+
+export function syncCheckoutAccountTypeOptions(state, duration, preferredType = '') {
+  const typeSelect = document.getElementById('checkout-account-type-select');
+  if (!typeSelect) return;
+  const list = (state.checkoutVariants || []).filter((v) => v.label === duration && v.stock > 0);
+  const types = [...new Set(list.map((v) => v.accountType))];
+  const pool = types.length > 0 ? types : [preferredType || ACCOUNT_TYPES[0].label];
+  typeSelect.innerHTML = pool.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+  typeSelect.value = pool.includes(preferredType) ? preferredType : pool[0];
 }
 
 export function syncQtyControls(qty, availStock) {
@@ -125,6 +135,10 @@ export function openCheckoutModal(state, product, variantOverride = null) {
   state.activeVoucher = null;
 
   const variants = buildCheckoutVariants(product);
+  if (variants.length === 0) {
+    showToast('Sản phẩm hiện đã hết hàng.', 'error');
+    return;
+  }
   state.checkoutVariants = variants;
   const matched =
     (variantOverride &&
@@ -133,24 +147,25 @@ export function openCheckoutModal(state, product, variantOverride = null) {
           v.label === variantOverride.label &&
           (!variantOverride.accountType || v.accountType === variantOverride.accountType)
       )) ||
-    variants.find((v) => v.stock > 0) ||
     variants[0];
 
   const varWrap = document.getElementById('checkout-variant-wrap');
   const durSelect = document.getElementById('checkout-duration-select');
-  const typeSelect = document.getElementById('checkout-account-type-select');
   const durations = [...new Set(variants.map((v) => v.label))];
-  const accountTypes = [...new Set(variants.map((v) => v.accountType))];
-  if (varWrap) varWrap.hidden = variants.length === 0;
+  if (varWrap) varWrap.hidden = false;
   if (durSelect) {
     durSelect.innerHTML = durations.map((d) => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
-    durSelect.value = matched.label;
+    durSelect.value = durations.includes(matched.label) ? matched.label : durations[0];
   }
-  if (typeSelect) {
-    typeSelect.innerHTML = accountTypes.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
-    typeSelect.value = matched.accountType;
-  }
-  syncCheckoutVariantUi(state, matched);
+  syncCheckoutAccountTypeOptions(state, durSelect?.value || matched.label, matched.accountType);
+  syncCheckoutVariantUi(
+    state,
+    resolveCheckoutVariant(
+      product,
+      durSelect?.value || matched.label,
+      document.getElementById('checkout-account-type-select')?.value || matched.accountType
+    )
+  );
 
   const voucherInput = document.getElementById('checkout-voucher-input');
   const discountNote = document.getElementById('checkout-discount-note');

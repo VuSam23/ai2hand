@@ -230,7 +230,13 @@ function bindEvents() {
     const buyBtn = e.target.closest('.btn-buy-now');
     if (buyBtn) {
       e.stopPropagation();
-      return startCheckout(buyBtn.dataset.id);
+      const { id, variantLabel, accountType, variantPrice, variantStock } = buyBtn.dataset;
+      return startCheckout(
+        id,
+        variantLabel
+          ? { label: variantLabel, accountType, price: Number(variantPrice) || 0, stock: Number(variantStock) || 0 }
+          : null
+      );
     }
     const card = e.target.closest('.product-card');
     if (card?.dataset.productId) openProductDetail(card.dataset.productId);

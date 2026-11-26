@@ -22,6 +22,7 @@ import {
   syncQtyControls,
   syncCheckoutVariantUi,
   resolveCheckoutVariant,
+  syncCheckoutAccountTypeOptions,
 } from './uiCheckoutSteps.js';
 
 export {
@@ -69,10 +70,14 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
     adjustQty((Number.parseInt(qtyInput?.value, 10) || 1) + 1);
   });
 
-  const handleVariantChange = async () => {
+  const handleVariantChange = async (e) => {
     if (!state.checkoutProduct) return;
     const dur = document.getElementById('checkout-duration-select')?.value || '1 Tháng';
-    const type = document.getElementById('checkout-account-type-select')?.value || 'Tài khoản riêng';
+    const typeSelect = document.getElementById('checkout-account-type-select');
+    if (e?.target?.id === 'checkout-duration-select') {
+      syncCheckoutAccountTypeOptions(state, dur, typeSelect?.value || '');
+    }
+    const type = typeSelect?.value || 'Tài khoản riêng';
     const chosen = resolveCheckoutVariant(state.checkoutProduct, dur, type);
     syncCheckoutVariantUi(state, chosen);
     if (state.activeVoucher) {

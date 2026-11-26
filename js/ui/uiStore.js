@@ -20,31 +20,23 @@ export function getCheapestVariant(product) {
       ...Object.keys(product?.manualStocks || {}),
     ]),
   ];
-  const candidates = allKeys
-    .map((key) => {
-      const [label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label] = key.split('|');
-      const customPrice = Number(product?.variantPrices?.[key] || 0);
-      const price = customPrice >= 1000 ? customPrice : Number(product?.price) || 0;
-      if (price < 1000) return null;
-      const vIdx = Math.max(0, DURATION_VARIANTS.findIndex((d) => d.label === label));
-      const tObj = ACCOUNT_TYPES.find((t) => t.label === accountType) || ACCOUNT_TYPES[0];
-      const months = Math.max(1, Number.parseInt(label, 10) || 1);
-      const base1M = Number(product?.variantPrices?.[`1 Tháng|${tObj.label}`] || 0);
-      const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
-      return {
-        label,
-        accountType: tObj.label,
-        accountTypeId: tObj.id,
-        variantIndex: vIdx,
-        price,
-        strike,
-        stock: getVariantStock(product, label, tObj.label),
-      };
-    })
-    .filter(Boolean);
+  const candidates = allKeys.map((key) => {
+    const [label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label] = key.split('|');
+    const customPrice = Number(product?.variantPrices?.[key] || 0);
+    const price = customPrice >= 1000 ? customPrice : Number(product?.price) || 0;
+    const stock = getVariantStock(product, label, accountType);
+    const vIdx = Math.max(0, DURATION_VARIANTS.findIndex((d) => d.label === label));
+    const tObj = ACCOUNT_TYPES.find((t) => t.label === accountType) || ACCOUNT_TYPES[0];
+    const months = Math.max(1, Number.parseInt(label, 10) || 1);
+    const base1M = Number(product?.variantPrices?.[`1 Tháng|${tObj.label}`] || 0);
+    const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
+    return { label, accountType: tObj.label, accountTypeId: tObj.id, variantIndex: vIdx, price, strike, stock };
+  });
 
-  const inStock = candidates.filter((c) => c.stock > 0);
-  const pool = inStock.length > 0 ? inStock : candidates;
+  const pricedInStock = candidates.filter((c) => c.stock > 0 && c.price >= 1000);
+  const anyInStock = candidates.filter((c) => c.stock > 0);
+  const priced = candidates.filter((c) => c.price >= 1000);
+  const pool = pricedInStock.length > 0 ? pricedInStock : anyInStock.length > 0 ? anyInStock : priced.length > 0 ? priced : candidates;
   if (pool.length > 0) {
     pool.sort((a, b) => a.price - b.price);
     return pool[0];
@@ -88,9 +80,15 @@ export function renderCategories(activeCategory, allProducts = []) {
 export function renderProductDetail(product, selectedVariantIndex = 0, selectedTypeId = 'private') {
   if (!product) return;
 
-  const activeType = ACCOUNT_TYPES.find((t) => t.id === selectedTypeId) || ACCOUNT_TYPES[0];
-  const typeMult = Number(activeType.multiplier) || 1;
   const isLifetime = String(product.duration).toLowerCase().includes('vĩnh viễn');
+  const rawDurLabel = isLifetime
+    ? product.duration
+    : DURATION_VARIANTS[Math.min(selectedVariantIndex, DURATION_VARIANTS.length - 1)]?.label || '1 Tháng';
+  let activeType = ACCOUNT_TYPES.find((t) => t.id === selectedTypeId) || ACCOUNT_TYPES[0];
+  if (getVariantStock(product, rawDurLabel, activeType.label) <= 0) {
+    activeType = ACCOUNT_TYPES.find((t) => getVariantStock(product, rawDurLabel, t.label) > 0) || activeType;
+  }
+  const typeMult = Number(activeType.multiplier) || 1;
   const base1M =
     Number(product.variantPrices?.[`1 Tháng|${activeType.label}`]) ||
     Math.round((product.price * typeMult) / 1000) * 1000;
@@ -101,17 +99,28 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
           price: Math.round((product.price * typeMult) / 1000) * 1000,
           strike: 0,
           stock: getVariantStock(product, product.duration, activeType.label),
+          anyStock: ACCOUNT_TYPES.some((t) => getVariantStock(product, product.duration, t.label) > 0),
         },
       ]
     : DURATION_VARIANTS.map((v) => {
         const customPrice = Number(product.variantPrices?.[`${v.label}|${activeType.label}`]);
+        const fallbackType = ACCOUNT_TYPES.find((t) => getVariantStock(product, v.label, t.label) > 0);
+        const altPrice = fallbackType ? Number(product.variantPrices?.[`${v.label}|${fallbackType.label}`]) : 0;
         const price =
           customPrice >= 1000
             ? customPrice
-            : Math.round((product.price * v.multiplier * typeMult) / 1000) * 1000;
+            : altPrice >= 1000
+              ? altPrice
+              : Math.round((product.price * v.multiplier * typeMult) / 1000) * 1000;
         const months = Math.max(1, Number.parseInt(v.label, 10) || 1);
         const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
-        return { label: v.label, price, strike, stock: getVariantStock(product, v.label, activeType.label) };
+        return {
+          label: v.label,
+          price,
+          strike,
+          stock: getVariantStock(product, v.label, activeType.label),
+          anyStock: Boolean(fallbackType),
+        };
       });
 
   const activeIdx = Math.min(selectedVariantIndex, variants.length - 1);
@@ -158,41 +167,39 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
 
   const durationWrap = document.getElementById('detail-duration-options');
   if (durationWrap) {
-    durationWrap.innerHTML = variants
-      .map((v, idx) => {
-        const disabled = v.stock <= 0 || v.price < 1000;
-        const subText = v.price < 1000 ? 'Chưa mở bán' : v.stock <= 0 ? 'Hết hàng (SL: 0)' : formatVnd(v.price);
-        return `
-        <button
-          type="button"
-          class="duration-btn ${idx === activeIdx ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''}"
-          data-variant-index="${idx}"
-          ${disabled ? 'disabled aria-disabled="true"' : ''}
-        >
+    const availDurations = variants
+      .map((v, idx) => ({ ...v, idx }))
+      .filter((v) => v.anyStock && v.price >= 1000);
+    durationWrap.innerHTML =
+      availDurations.length > 0
+        ? availDurations
+            .map(
+              (v) => `
+        <button type="button" class="duration-btn ${v.idx === activeIdx ? 'is-active' : ''}" data-variant-index="${v.idx}">
           <strong>${escapeHtml(v.label)}</strong>
-          <span>${subText}</span>
-        </button>`;
-      })
-      .join('');
+          <span>${formatVnd(v.price)}</span>
+        </button>`
+            )
+            .join('')
+        : '<span class="section-subtitle">Sản phẩm tạm hết hàng</span>';
   }
 
   const typeWrap = document.getElementById('detail-account-types');
   if (typeWrap) {
-    typeWrap.innerHTML = ACCOUNT_TYPES.map((t) => {
-      const tStock = getVariantStock(product, currentVariant.label, t.label);
-      const disabled = tStock <= 0;
-      const subText = disabled ? 'Hết hàng (SL: 0)' : `${t.desc} • SL: ${tStock}`;
-      return `
-        <button
-          type="button"
-          class="account-type-btn ${t.id === activeType.id ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''}"
-          data-type-id="${escapeHtml(t.id)}"
-          ${disabled ? 'disabled aria-disabled="true"' : ''}
-        >
+    const availTypes = ACCOUNT_TYPES.filter((t) => getVariantStock(product, currentVariant.label, t.label) > 0);
+    typeWrap.innerHTML =
+      availTypes.length > 0
+        ? availTypes
+            .map((t) => {
+              const tStock = getVariantStock(product, currentVariant.label, t.label);
+              return `
+        <button type="button" class="account-type-btn ${t.id === activeType.id ? 'is-active' : ''}" data-type-id="${escapeHtml(t.id)}">
           <strong>${escapeHtml(t.label)}</strong>
-          <span>${escapeHtml(subText)}</span>
+          <span>${escapeHtml(`${t.desc} • SL: ${tStock}`)}</span>
         </button>`;
-    }).join('');
+            })
+            .join('')
+        : '<span class="section-subtitle">Sản phẩm tạm hết hàng</span>';
   }
 
   const stockEl = document.getElementById('hero-stock');
@@ -241,10 +248,11 @@ export function renderProductGrid(products) {
   grid.innerHTML = products
     .map((item) => {
       const cheapest = getCheapestVariant(item);
-      const isEmpty = item.stock === 0 || cheapest.stock === 0;
-      const isLow = item.stock > 0 && item.stock <= 5;
+      const displayStock = cheapest.stock > 0 ? cheapest.stock : item.stock;
+      const isEmpty = displayStock === 0;
+      const isLow = displayStock > 0 && displayStock <= 5;
       const stockClass = isEmpty ? 'is-empty' : isLow ? 'is-low' : '';
-      const stockLabel = isEmpty ? 'Hết hàng' : `Còn ${item.stock} tài khoản`;
+      const stockLabel = isEmpty ? 'Hết hàng' : `Còn ${displayStock} tài khoản`;
       const hasPrice = cheapest.price >= 1000;
       const hasDiscount = hasPrice && Number(cheapest.strike) > cheapest.price;
       const priceLabel = hasPrice ? formatVnd(cheapest.price) : 'Chưa mở bán';
@@ -274,7 +282,7 @@ export function renderProductGrid(products) {
               ${discountPct > 0 ? `<span class="discount-badge card-discount-badge">-${discountPct}%</span>` : ''}
             </div>
             <div class="card-actions">
-              <button type="button" class="btn btn-primary btn-buy-now" data-action="buy" data-id="${escapeHtml(item.id)}" ${isEmpty || !hasPrice ? 'disabled' : ''}>
+              <button type="button" class="btn btn-primary btn-buy-now" data-action="buy" data-id="${escapeHtml(item.id)}" data-variant-label="${escapeHtml(cheapest.label)}" data-account-type="${escapeHtml(cheapest.accountType)}" data-variant-price="${cheapest.price}" data-variant-stock="${displayStock}" ${isEmpty || !hasPrice ? 'disabled' : ''}>
                 ${!hasPrice ? 'Chưa mở bán' : isEmpty ? 'Hết hàng' : 'Mua ngay'}
               </button>
               <button type="button" class="btn btn-ghost btn-detail" data-action="detail" data-id="${escapeHtml(item.id)}">
