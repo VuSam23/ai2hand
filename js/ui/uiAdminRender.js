@@ -24,7 +24,7 @@ export function switchAdminTab(tabKey = 'stats') {
 export function syncImportPriceInput(products = []) {
   const pid = document.getElementById('admin-import-product')?.value || '';
   const dur = document.getElementById('admin-import-duration')?.value || '1 Tháng';
-  const type = document.getElementById('admin-import-type')?.value || 'Tài khoản riêng';
+  const type = document.getElementById('admin-import-type')?.value || 'TK cấp sẵn';
   const priceEl = document.getElementById('admin-import-price');
   if (!priceEl) return;
   const prod = products.find((p) => p.id === pid);
@@ -46,7 +46,7 @@ export function renderAdminOrders(orders = []) {
       const code = o.order_code || o.orderCode;
       const name = o.product_name || o.productName;
       const duration = o.duration || '1 Tháng';
-      const accountType = o.account_type || o.accountType || 'Tài khoản riêng';
+      const accountType = o.account_type || o.accountType || 'TK cấp sẵn';
       const amount = o.amount ?? o.totalAmount ?? 0;
       const statusVal = String(o.status || 'pending').toLowerCase();
       const isPaid = statusVal === 'paid';
@@ -157,7 +157,7 @@ export function renderAdminView(products, orders = null, promos = null) {
           allKeys.length > 0
             ? allKeys
                 .map((key) => {
-                  const [dur = '1 Tháng', type = 'Tài khoản riêng'] = key.split('|');
+                  const [dur = '1 Tháng', type = 'TK cấp sẵn'] = key.split('|');
                   const qty = Number(vs[key] || 0);
                   const manualQty = Math.max(0, Number(ms[key] || 0));
                   const customPrice = Number(vp[key] || 0);

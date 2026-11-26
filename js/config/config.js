@@ -40,9 +40,9 @@ export const DURATION_VARIANTS = [
 export const ACCOUNT_TYPES = [
   {
     id: 'private',
-    label: 'Tài khoản riêng',
+    label: 'TK cấp sẵn',
     multiplier: 1,
-    desc: 'Mail riêng + Pass cá nhân dùng ngay sau 5s',
+    desc: 'Email + Password cấp sẵn kèm gói cước • Đối với Gmail chỉ hỗ trợ get OTP đăng nhập tối đa 2 lần, từ 2 lần trở lên tính phí 7.000đ/lượt',
   },
   {
     id: 'shared',

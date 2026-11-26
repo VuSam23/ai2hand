@@ -68,7 +68,7 @@ serve(async (req) => {
     const productId = String(body.productId || "").trim();
     const qty = Math.max(1, Math.min(50, Math.round(Number(body.quantity) || 1)));
     const duration = String(body.duration || "1 Tháng").trim();
-    const accountType = String(body.accountType || "Tài khoản riêng").trim();
+    const accountType = String(body.accountType || "TK cấp sẵn").trim();
     const contact = String(body.contact || "").trim();
     const voucherCode = String(body.voucherCode || "").trim().toUpperCase();
     const trafficSource = String(body.trafficSource || "Direct").trim().slice(0, 64);
@@ -112,7 +112,7 @@ serve(async (req) => {
       const availStock = Array.isArray(keyRows)
         ? keyRows.filter(
             (k) =>
-              ((k.duration || "1 Tháng") === duration && (k.account_type || "Tài khoản riêng") === accountType) ||
+              ((k.duration || "1 Tháng") === duration && (k.account_type || "TK cấp sẵn") === accountType) ||
               k.duration == null ||
               k.account_type == null
           ).length

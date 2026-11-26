@@ -19,12 +19,16 @@ async function sendTelegramAlert(text: string): Promise<void> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 4000);
   try {
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    const tgRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: "POST",
       signal: controller.signal,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text }),
     });
+    if (!tgRes.ok) {
+      const errBody = await tgRes.text().catch(() => "");
+      console.warn("[Telegram API Error]", tgRes.status, errBody.slice(0, 300));
+    }
   } catch (err) {
     const safeErr = TELEGRAM_BOT_TOKEN ? String(err).replaceAll(TELEGRAM_BOT_TOKEN, "[REDACTED]") : String(err);
     console.warn("[Telegram Alert Error]", safeErr);
@@ -96,7 +100,7 @@ serve(async (req) => {
           `[ĐƠN CẤP THỦ CÔNG - ĐÃ THANH TOÁN]\n` +
             `Mã đơn: #${order.order_code}\n` +
             `Sản phẩm: ${order.product_name || order.product_id}\n` +
-            `Biến thể: ${order.duration || "1 Tháng"} • ${order.account_type || "Tài khoản riêng"} (x${order.quantity || 1})\n` +
+            `Biến thể: ${order.duration || "1 Tháng"} • ${order.account_type || "TK cấp sẵn"} (x${order.quantity || 1})\n` +
             `Đã nhận: ${formatVnd(amount)}\n` +
             `Nguồn: ${order.traffic_source || "Direct"}\n` +
             `Email / Zalo khách nhận: ${order.contact || "Không rõ"}`
@@ -142,7 +146,7 @@ serve(async (req) => {
       `[ĐƠN HÀNG MỚI THÀNH CÔNG]\n` +
         `Mã đơn: #${order.order_code}\n` +
         `Sản phẩm: ${order.product_name || order.product_id}\n` +
-        `Biến thể: ${order.duration || "1 Tháng"} • ${order.account_type || "Tài khoản riêng"} (x${order.quantity || 1})\n` +
+        `Biến thể: ${order.duration || "1 Tháng"} • ${order.account_type || "TK cấp sẵn"} (x${order.quantity || 1})\n` +
         `Đã nhận: ${formatVnd(amount)}\n` +
         `Nguồn: ${order.traffic_source || "Direct"}\n` +
         `Khách nhận: ${order.contact || "Không rõ"}`

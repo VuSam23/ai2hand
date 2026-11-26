@@ -71,12 +71,11 @@ export function syncCheckoutVariantUi(state, variantObj) {
 
   const deliveryNote = document.getElementById('checkout-delivery-note');
   const showManualNote = variantObj.isManual || variantObj.accountType === 'Nâng cấp chính chủ';
+  const showPrebuiltNote = !showManualNote && variantObj.accountType === 'TK cấp sẵn';
   if (deliveryNote) {
-    deliveryNote.hidden = !showManualNote;
-    if (showManualNote) {
-      deliveryNote.textContent =
-        'Với gói nâng cấp thủ công, sau khi thanh toán thành công quý khách vui lòng liên hệ Admin (Zalo / Telegram) kèm mã đơn để được hỗ trợ kích hoạt nhanh nhất.';
-    }
+    deliveryNote.hidden = !showManualNote && !showPrebuiltNote;
+    if (showManualNote) deliveryNote.textContent = 'Với gói nâng cấp thủ công, sau khi thanh toán thành công quý khách vui lòng liên hệ Admin (Zalo / Telegram) kèm mã đơn để được hỗ trợ kích hoạt nhanh nhất.';
+    else if (showPrebuiltNote) deliveryNote.textContent = 'Email + Password cấp sẵn kèm gói cước. Lưu ý đối với Gmail chỉ hỗ trợ get OTP đăng nhập tối đa 2 lần, trường hợp 2 lần trở lên sẽ tính phí 7.000đ/1 lượt.';
   }
 
   const qtyInput = document.getElementById('checkout-qty');

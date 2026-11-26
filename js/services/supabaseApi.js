@@ -111,7 +111,7 @@ export async function createOrder(payload) {
   if (!product) throw new Error('Không tìm thấy gói sản phẩm.');
   const quantity = Math.max(1, Number(payload.quantity) || 1);
   const duration = payload.customDuration || product.duration || '1 Tháng';
-  const accountType = payload.accountType || 'Tài khoản riêng';
+  const accountType = payload.accountType || 'TK cấp sẵn';
   const availStock = getVariantStock(product, duration, accountType);
   if (availStock < quantity) throw new Error(`Số lượng vượt quá tồn kho (${availStock}).`);
 

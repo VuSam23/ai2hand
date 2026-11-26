@@ -212,7 +212,7 @@ export async function adminImportCredentials(
   productId,
   rawText,
   duration = '1 Tháng',
-  accountType = 'Tài khoản riêng'
+  accountType = 'TK cấp sẵn'
 ) {
   if (!isAdminLoggedIn()) throw new Error('Cần quyền Admin để nạp kho.');
   const cleanId = String(productId || '').trim();
@@ -222,7 +222,7 @@ export async function adminImportCredentials(
   const res = await callAdminFunction('import_keys', {
     productId: cleanId,
     duration: String(duration || '1 Tháng').trim(),
-    accountType: String(accountType || 'Tài khoản riêng').trim(),
+    accountType: String(accountType || 'TK cấp sẵn').trim(),
     lines,
   });
   return {

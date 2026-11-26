@@ -18,4 +18,23 @@
 2. **Bổ sung nút Quên mật khẩu / Đổi mật khẩu cho khách:** Giúp khách tự lấy lại mật khẩu qua email nếu lỡ quên, tránh phải nhắn Zalo nhờ bạn cấp lại thủ công.
 3. **Đổi token Telegram lần cuối:** Khi chuẩn bị chạy thật, nhắn `/revoke` cho `@BotFather` thêm một lần nữa và dán thẳng token mới vào Terminal (`npx supabase secrets set TELEGRAM_BOT_TOKEN="..."`) mà không gửi lên khung chat.
 
-Bạn muốn bắt đầu ngay với việc **cập nhật đồng bộ tên thương hiệu `ai2hand` + thẻ chia sẻ MXH** vào mã nguồn hay cần hướng dẫn chi tiết cách nối **SePay** vào `payment-webhook`?
+## Bạn muốn bắt đầu ngay với việc **cập nhật đồng bộ tên thương hiệu `ai2hand` + thẻ chia sẻ MXH** vào mã nguồn hay cần hướng dẫn chi tiết cách nối **SePay** vào `payment-webhook`?
+
+## Bước 5: Dọn dẹp Dữ liệu Test & Khóa Bảo mật Go-Live
+
+Mục tiêu: Đưa hệ thống về trạng thái sạch sẽ, khóa chặt tên miền và token trước khi quảng bá.
+
+Thao tác thực hiện:
+
+Xóa dữ liệu test: Mở Supabase SQL Editor chạy lệnh xóa các đơn test và key test vừa tạo ở Bước 4, sau đó chỉnh lại bảng giá bán thật trong Admin:
+
+SQL
+DELETE FROM public.orders WHERE order_code LIKE 'ACC%';
+DELETE FROM public.inventory_keys WHERE account_data LIKE 'test@%';
+Khóa tên miền chính thức:
+
+Vào Supabase Dashboard → Authentication → URL Configuration, đặt Site URL và Redirect URLs về đúng tên miền chính thức ([https://ai2hand.vn](https://ai2hand.vn)).
+
+Vào Supabase Edge Functions → Secrets, kiểm tra biến ALLOWED_ORIGINS chỉ chứa tên miền chính thức (gỡ bỏ localhost nếu không cần thiết).
+
+Xoay vòng Token Telegram: Nhắn /revoke cho @BotFather trên Telegram để lấy token mới, sau đó cập nhật lại lên Supabase bằng lệnh:

@@ -7,7 +7,7 @@ export function addVariantCount(stockInfoMap, pid, duration, accountType, count)
   if (!pid || count <= 0) return;
   const current = stockInfoMap.get(pid) || { total: 0, variants: {} };
   current.total += count;
-  const key = `${String(duration || '1 Tháng').trim()}|${String(accountType || 'Tài khoản riêng').trim()}`;
+  const key = `${String(duration || '1 Tháng').trim()}|${String(accountType || 'TK cấp sẵn').trim()}`;
   current.variants[key] = (current.variants[key] || 0) + count;
   stockInfoMap.set(pid, current);
 }
@@ -40,12 +40,12 @@ export function normalizeProduct(row, stockInfoMap = new Map()) {
   };
 }
 
-export function isVariantManual(product, duration = '1 Tháng', accountType = 'Tài khoản riêng') {
+export function isVariantManual(product, duration = '1 Tháng', accountType = 'TK cấp sẵn') {
   if (!product || product.isActive === false) return false;
   return Math.max(0, Number(product.manualStocks?.[`${duration}|${accountType}`] || 0)) > 0;
 }
 
-export function getVariantStock(product, duration = '1 Tháng', accountType = 'Tài khoản riêng') {
+export function getVariantStock(product, duration = '1 Tháng', accountType = 'TK cấp sẵn') {
   if (!product || product.isActive === false) return 0;
   const key = `${duration}|${accountType}`;
   const manualQty = Math.max(0, Number(product.manualStocks?.[key] || 0));
@@ -56,7 +56,7 @@ export function getVariantStock(product, duration = '1 Tháng', accountType = 'T
     Object.keys(variants).length > 0 || Object.keys(product.manualStocks || {}).length > 0;
   if (hasStockMap) return Number(variants[key] || 0);
   const defDur = product.duration || '1 Tháng';
-  const defType = product.accountType || 'Tài khoản riêng';
+  const defType = product.accountType || 'TK cấp sẵn';
   return duration === defDur && accountType === defType ? Number(product.stock) || 0 : 0;
 }
 

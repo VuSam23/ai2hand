@@ -77,7 +77,7 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
     if (e?.target?.id === 'checkout-duration-select') {
       syncCheckoutAccountTypeOptions(state, dur, typeSelect?.value || '');
     }
-    const type = typeSelect?.value || 'Tài khoản riêng';
+    const type = typeSelect?.value || 'TK cấp sẵn';
     const chosen = resolveCheckoutVariant(state.checkoutProduct, dur, type);
     syncCheckoutVariantUi(state, chosen);
     if (state.activeVoucher) {

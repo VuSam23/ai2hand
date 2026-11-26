@@ -93,7 +93,7 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
       if (!productId) return showToast('Vui lòng chọn gói sản phẩm cần nạp kho.', 'error');
 
       const duration = document.getElementById('admin-import-duration')?.value || '1 Tháng';
-      const accountType = document.getElementById('admin-import-type')?.value || 'Tài khoản riêng';
+      const accountType = document.getElementById('admin-import-type')?.value || 'TK cấp sẵn';
       const variantPrice = Math.round(Number(document.getElementById('admin-import-price')?.value) || 0);
       const res = await adminImportCredentials(
         productId,

@@ -77,14 +77,6 @@ export function bindAccountAndAdminEvents({
     const copyBtn = e.target.closest('[data-copy-raw]');
     if (copyBtn) return copyText(copyBtn.dataset.copyRaw, 'tài khoản', copyBtn);
 
-    const warrantyBtn = e.target.closest('[data-action="warranty"]');
-    if (warrantyBtn) {
-      const msg = `Yêu cầu bảo hành 1:1 đơn #${warrantyBtn.dataset.orderCode} - Gói: ${warrantyBtn.dataset.productName}`;
-      await copyText(msg, 'nội dung bảo hành (Hãy dán vào Zalo hỗ trợ)', warrantyBtn);
-      window.open('https://zalo.me/0373786203', '_blank', 'noopener,noreferrer');
-      return;
-    }
-
     const buyAgainBtn = e.target.closest('[data-action="buy-again"]');
     if (buyAgainBtn) {
       const target = state.products.find((p) => p.id === buyAgainBtn.dataset.productId);

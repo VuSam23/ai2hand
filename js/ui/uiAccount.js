@@ -130,7 +130,6 @@ export function renderAccountView(profile, orders = [], defaultTab = 'overview')
           </td>
           <td data-label="Thao tác">
             <div class="acc-row-actions">
-              <button type="button" class="btn btn-ghost btn-detail" data-action="warranty" data-order-code="${escapeHtml(order.orderCode)}" data-product-name="${escapeHtml(order.productName)}">Bảo hành 1:1</button>
               <button type="button" class="btn btn-ghost btn-detail" data-action="buy-again" data-product-id="${escapeHtml(order.productId)}">Mua thêm</button>
             </div>
           </td>

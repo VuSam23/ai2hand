@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS public.inventory_keys (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   product_id text NOT NULL REFERENCES public.products(id) ON DELETE RESTRICT,
   duration text DEFAULT '1 Tháng',
-  account_type text DEFAULT 'Tài khoản riêng',
+  account_type text DEFAULT 'TK cấp sẵn',
   credential text NOT NULL,
   is_sold boolean NOT NULL DEFAULT false,
   order_code text NULL,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   product_name text NOT NULL,
   quantity integer NOT NULL DEFAULT 1,
   duration text DEFAULT '1 Tháng',
-  account_type text DEFAULT 'Tài khoản riêng',
+  account_type text DEFAULT 'TK cấp sẵn',
   contact text NOT NULL,
   amount integer NOT NULL DEFAULT 0,
   status text NOT NULL DEFAULT 'pending',
@@ -117,14 +117,14 @@ AS $$
   SELECT
     ik.product_id,
     COALESCE(ik.duration, '1 Tháng') AS duration,
-    COALESCE(ik.account_type, 'Tài khoản riêng') AS account_type,
+    COALESCE(ik.account_type, 'TK cấp sẵn') AS account_type,
     COUNT(*)::bigint AS stock
   FROM public.inventory_keys ik
   WHERE ik.is_sold = false
   GROUP BY
     ik.product_id,
     COALESCE(ik.duration, '1 Tháng'),
-    COALESCE(ik.account_type, 'Tài khoản riêng');
+    COALESCE(ik.account_type, 'TK cấp sẵn');
 $$;
 
 REVOKE ALL ON FUNCTION public.get_product_stocks() FROM PUBLIC;
@@ -189,7 +189,7 @@ BEGIN
     WHERE product_id = v_order.product_id
       AND is_sold = false
       AND COALESCE(duration, '1 Tháng') = COALESCE(v_order.duration, '1 Tháng')
-      AND COALESCE(account_type, 'Tài khoản riêng') = COALESCE(v_order.account_type, 'Tài khoản riêng')
+      AND COALESCE(account_type, 'TK cấp sẵn') = COALESCE(v_order.account_type, 'TK cấp sẵn')
     ORDER BY created_at ASC
     LIMIT 1
     FOR UPDATE SKIP LOCKED;
@@ -258,7 +258,7 @@ BEGIN
     RETURN false;
   END IF;
 
-  v_key := COALESCE(v_order.duration, '1 Tháng') || '|' || COALESCE(v_order.account_type, 'Tài khoản riêng');
+  v_key := COALESCE(v_order.duration, '1 Tháng') || '|' || COALESCE(v_order.account_type, 'TK cấp sẵn');
   v_qty := GREATEST(1, COALESCE(v_order.quantity, 1));
 
   UPDATE public.products

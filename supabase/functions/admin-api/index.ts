@@ -200,7 +200,7 @@ serve(async (req) => {
       if (!productId) return jsonRes({ ok: false, error: "Thiếu productId gói cần nạp kho" }, 400);
 
       const duration = String(payload.duration || "1 Tháng").trim();
-      const accountType = String(payload.accountType || "Tài khoản riêng").trim();
+      const accountType = String(payload.accountType || "TK cấp sẵn").trim();
       const lines = Array.isArray(payload.lines) ? payload.lines : [];
       if (lines.length === 0) return jsonRes({ ok: false, error: "Danh sách key rỗng" }, 400);
 
