@@ -61,6 +61,18 @@ export function getProductDurations(product) {
   return labels.map((label) => DURATION_VARIANTS.find((d) => normalizeDurationLabel(d.label) === label) || { label, multiplier: 1 });
 }
 
+export function calcVariantStrikePrice(product, label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label, unitPrice = 0) {
+  const basePrice = Math.round(Number(product?.price) || 0);
+  const price = Math.round(Number(unitPrice) || 0);
+  if (price < 1000) return 0;
+  if (basePrice > price) return basePrice;
+  const months = /tháng|thang/i.test(label) ? Math.max(1, Number.parseInt(label, 10) || 1) : 1;
+  if (months <= 1) return 0;
+  const base1M = getVariantPrice(product, '1 Tháng', accountType) || basePrice;
+  const strike = base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
+  return strike > price ? strike : 0;
+}
+
 export function getCheapestVariant(product) {
   const durationList = getProductDurations(product);
   const rawKeys = [
@@ -79,9 +91,7 @@ export function getCheapestVariant(product) {
     const stock = getVariantStock(product, label, accountType);
     const vIdx = Math.max(0, durationList.findIndex((d) => d.label === label));
     const tObj = ACCOUNT_TYPES.find((t) => t.label === accountType) || ACCOUNT_TYPES[0];
-    const months = /tháng|thang/i.test(label) ? Math.max(1, Number.parseInt(label, 10) || 1) : 1;
-    const base1M = getVariantPrice(product, '1 Tháng', tObj.label);
-    const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
+    const strike = calcVariantStrikePrice(product, label, tObj.label, price);
     return { label, accountType: tObj.label, accountTypeId: tObj.id, variantIndex: vIdx, price, strike, stock };
   });
 

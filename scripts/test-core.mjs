@@ -130,7 +130,7 @@ test('5. Bien the ton kho, Cap thu cong, Promo va Cheapest Variant', () => {
   const prod = {
     id: 'claude-pro',
     name: 'Claude Pro',
-    price: 60000,
+    price: 29000,
     isActive: true,
     stock: 9,
     variantStocks: { '1 Tháng|TK cấp sẵn': 2, '7 ngày|TK cấp sẵn': 3 },
@@ -173,6 +173,19 @@ test('5. Bien the ton kho, Cap thu cong, Promo va Cheapest Variant', () => {
   assert.equal(cheapest.price, 29000);
   assert.equal(cheapest.stock, 3);
   assert.equal(cheapest.strike, 0);
+
+  // Giá gốc đặt cao hơn giá bán biến thể (899000 > 279000 cho 12 Tháng) -> không nhân với 12
+  const prodHigherBase = {
+    id: 'gg-ai-12m',
+    name: 'Google AI 12M',
+    price: 899000,
+    isActive: true,
+    variantStocks: { '12 Tháng|TK cấp sẵn': 5 },
+    variantPrices: { '12 Tháng|TK cấp sẵn': 279000 },
+  };
+  assert.equal(uiStore.calcVariantStrikePrice(prodHigherBase, '12 Tháng', 'TK cấp sẵn', 279000), 899000);
+  assert.equal(uiStore.getCheapestVariant(prodHigherBase).strike, 899000);
+  assert.equal(uiStore.calcVariantStrikePrice({ price: 89000, variantPrices: { '1 Tháng|TK cấp sẵn': 89000 } }, '12 Tháng', 'TK cấp sẵn', 700000), 1068000);
 
   // Kiểm tra gộp cộng dồn SL không phân biệt hoa/thường ('18 Tháng' + '18 tháng' = 2)
   const stockMap = new Map();

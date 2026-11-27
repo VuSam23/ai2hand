@@ -5,9 +5,9 @@ import { CATEGORIES, DURATION_VARIANTS, ACCOUNT_TYPES } from '../config/config.j
 import { getVariantStock, getVariantPrice, isVariantManual } from '../services/supabaseApi.js';
 import { formatVnd, escapeHtml } from './uiCommon.js';
 import { renderSaleDescriptionHtml } from './uiPrebuiltGuide.js';
-import { renderEmblemHtml, renderCardCoverHtml, renderDetailMediaHtml, getProductDurations, getCheapestVariant } from './uiStoreVariants.js';
+import { renderEmblemHtml, renderCardCoverHtml, renderDetailMediaHtml, getProductDurations, calcVariantStrikePrice, getCheapestVariant } from './uiStoreVariants.js';
 
-export { getProductDurations, getCheapestVariant };
+export { getProductDurations, calcVariantStrikePrice, getCheapestVariant };
 
 export function renderCategories(activeCategory, allProducts = []) {
   const container = document.getElementById('category-filters');
@@ -41,23 +41,21 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
     activeType = ACCOUNT_TYPES.find((t) => getVariantStock(product, rawDurLabel, t.label) > 0) || activeType;
   }
   const fallbackBasePrice = Math.round(Number(product.price) || 0);
-  const base1M = getVariantPrice(product, '1 Tháng', activeType.label) || fallbackBasePrice;
+  const lifetimeCustomPrice = getVariantPrice(product, product.duration, activeType.label);
+  const lifetimePrice = lifetimeCustomPrice >= 1000 ? lifetimeCustomPrice : fallbackBasePrice;
   const variants = isLifetime
     ? [{
         label: product.duration,
         multiplier: 1,
-        price: getVariantPrice(product, product.duration, activeType.label) >= 1000
-          ? getVariantPrice(product, product.duration, activeType.label)
-          : fallbackBasePrice,
-        strike: 0,
+        price: lifetimePrice,
+        strike: calcVariantStrikePrice(product, product.duration, activeType.label, lifetimePrice),
         stock: getVariantStock(product, product.duration, activeType.label),
         durStock: durStockOf(product.duration),
       }]
     : durationList.map((v) => {
         const customPrice = getVariantPrice(product, v.label, activeType.label);
         const price = customPrice >= 1000 ? customPrice : fallbackBasePrice;
-        const months = /tháng|thang/i.test(v.label) ? Math.max(1, Number.parseInt(v.label, 10) || 1) : 1;
-        const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
+        const strike = calcVariantStrikePrice(product, v.label, activeType.label, price);
         return { label: v.label, multiplier: v.multiplier, price, strike, stock: getVariantStock(product, v.label, activeType.label), durStock: durStockOf(v.label) };
       });
 
