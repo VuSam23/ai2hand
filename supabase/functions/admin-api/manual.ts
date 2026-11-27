@@ -151,9 +151,13 @@ export async function handleManualAction(
     if (!id) return jsonRes({ ok: false, error: "Thiếu id key cần xóa." }, 400);
     const res = await fetch(
       `${supabaseUrl}/rest/v1/inventory_keys?id=eq.${encodeURIComponent(id)}&is_sold=eq.false`,
-      { method: "DELETE", headers: svcHeaders }
+      { method: "DELETE", headers: { ...svcHeaders, Prefer: "return=representation" } }
     );
     if (!res.ok) return jsonRes({ ok: false, error: await res.text() }, 400);
+    const deletedRows = await res.json().catch(() => []);
+    if (!Array.isArray(deletedRows) || deletedRows.length === 0) {
+      return jsonRes({ ok: false, error: "Key không tồn tại hoặc đã được bán." }, 400);
+    }
     return jsonRes({ ok: true, deletedId: id });
   }
 

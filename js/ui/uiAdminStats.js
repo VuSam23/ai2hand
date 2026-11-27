@@ -5,16 +5,18 @@ import { formatVnd, escapeHtml } from './uiCommon.js';
 
 function countLowStockItems(products = []) {
   let count = 0;
-  products.forEach((p) => {
-    const vs = p.variantStocks || {};
-    const ms = p.manualStocks || {};
-    const keys = [...new Set([...Object.keys(vs), ...Object.keys(ms)])];
-    if (keys.length > 0) {
-      count += keys.filter((k) => Number(vs[k] || 0) + Number(ms[k] || 0) <= 2).length;
-    } else if (Number(p.stock) <= 2) {
-      count += 1;
-    }
-  });
+  products
+    .filter((p) => p && p.isActive !== false)
+    .forEach((p) => {
+      const vs = p.variantStocks || {};
+      const ms = p.manualStocks || {};
+      const keys = [...new Set([...Object.keys(vs), ...Object.keys(ms)])];
+      if (keys.length > 0) {
+        count += keys.filter((k) => Number(vs[k] || 0) + Number(ms[k] || 0) <= 2).length;
+      } else if (Number(p.stock) <= 2) {
+        count += 1;
+      }
+    });
   return count;
 }
 
@@ -46,16 +48,20 @@ export function renderAdminStats(products = [], orders = []) {
     return st === 'paid' || st === 'pending_manual';
   };
   const paidOrders = list.filter(isCollected);
+  const paidOnlyCount = paidOrders.filter((o) => String(o.status || '').toLowerCase() === 'paid').length;
+  const manualCount = paidOrders.length - paidOnlyCount;
   const totalRevenue = paidOrders.reduce((s, o) => s + (Number(o.amount ?? o.totalAmount) || 0), 0);
   const todayRevenue = paidOrders
     .filter((o) => o.created_at && new Date(o.created_at).toLocaleDateString('en-CA') === todayStr)
     .reduce((s, o) => s + (Number(o.amount ?? o.totalAmount) || 0), 0);
   const convRate = list.length > 0 ? Math.round((paidOrders.length / list.length) * 100) : 0;
   const lowStockCount = countLowStockItems(products);
+  const revenueNote =
+    manualCount > 0 ? `${paidOnlyCount} đã giao • ${manualCount} chờ cấp` : `${paidOnlyCount} đơn đã bàn giao`;
 
   cardsEl.innerHTML = [
     ['Doanh thu hôm nay', formatVnd(todayRevenue), 'Đơn đã thanh toán hôm nay', ''],
-    ['Tổng doanh thu (PAID)', formatVnd(totalRevenue), `${paidOrders.length} đơn thành công`, 'text-secondary'],
+    ['Tổng doanh thu (PAID)', formatVnd(totalRevenue), revenueNote, 'text-secondary'],
     ['Tỷ lệ chốt đơn', `${paidOrders.length}/${list.length} (${convRate}%)`, 'Đơn thanh toán / tổng tạo', ''],
     ['Cảnh báo sắp hết kho', `${lowStockCount} biến thể`, 'Tồn kho <= 2 key', lowStockCount > 0 ? 'text-error' : 'text-secondary'],
   ]

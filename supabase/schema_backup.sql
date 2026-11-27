@@ -186,13 +186,13 @@ BEGIN
   v_needed := GREATEST(1, COALESCE(v_order.quantity, 1));
 
   FOR i IN 1..v_needed LOOP
-    -- Ưu tiên khớp chính xác cả 3 điều kiện (product_id, duration, account_type)
+    -- Ưu tiên khớp chính xác cả 3 điều kiện (product_id, duration, account_type) không phân biệt hoa/thường
     SELECT * INTO v_key
     FROM public.inventory_keys
     WHERE product_id = v_order.product_id
       AND is_sold = false
-      AND COALESCE(duration, '1 Tháng') = COALESCE(v_order.duration, '1 Tháng')
-      AND COALESCE(account_type, 'TK cấp sẵn') = COALESCE(v_order.account_type, 'TK cấp sẵn')
+      AND LOWER(TRIM(COALESCE(duration, '1 Tháng'))) = LOWER(TRIM(COALESCE(v_order.duration, '1 Tháng')))
+      AND LOWER(TRIM(COALESCE(account_type, 'TK cấp sẵn'))) = LOWER(TRIM(COALESCE(v_order.account_type, 'TK cấp sẵn')))
     ORDER BY created_at ASC
     LIMIT 1
     FOR UPDATE SKIP LOCKED;
@@ -244,9 +244,10 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_order RECORD;
-  v_key   text;
-  v_qty   integer;
+  v_order      RECORD;
+  v_key        text;
+  v_actual_key text;
+  v_qty        integer;
 BEGIN
   SELECT * INTO v_order
   FROM public.orders
@@ -264,11 +265,20 @@ BEGIN
   v_key := COALESCE(v_order.duration, '1 Tháng') || '|' || COALESCE(v_order.account_type, 'TK cấp sẵn');
   v_qty := GREATEST(1, COALESCE(v_order.quantity, 1));
 
+  SELECT k INTO v_actual_key
+  FROM public.products p,
+       LATERAL jsonb_object_keys(COALESCE(p.manual_stocks, '{}'::jsonb)) AS k
+  WHERE p.id = v_order.product_id
+    AND LOWER(TRIM(k)) = LOWER(TRIM(v_key))
+  LIMIT 1;
+
+  v_actual_key := COALESCE(v_actual_key, v_key);
+
   UPDATE public.products
   SET manual_stocks = jsonb_set(
     COALESCE(manual_stocks, '{}'::jsonb),
-    ARRAY[v_key],
-    to_jsonb(GREATEST(0, COALESCE((manual_stocks ->> v_key)::integer, 0) - v_qty)),
+    ARRAY[v_actual_key],
+    to_jsonb(GREATEST(0, COALESCE((manual_stocks ->> v_actual_key)::integer, 0) - v_qty)),
     true
   )
   WHERE id = v_order.product_id;

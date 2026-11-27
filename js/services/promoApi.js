@@ -2,6 +2,7 @@
  * js/services/promoApi.js — Kiểm tra & tính toán Mã giảm giá (promo_codes)
  */
 import { SUPABASE_CONFIG, isSupabaseConfigured, VOUCHERS } from '../config/config.js';
+import { normalizeDurationLabel } from './supabaseMappers.js';
 
 export function calculatePromoDiscount(promo, subTotal) {
   if (!promo || subTotal <= 0) return 0;
@@ -46,8 +47,8 @@ export async function validatePromoCode(rawCode, productId = null, duration = nu
     if (row.product_id && productId && row.product_id !== productId) {
       throw new Error('Mã giảm giá này chỉ áp dụng cho gói sản phẩm khác.');
     }
-    if (row.duration && row.duration !== duration) {
-      throw new Error(`Mã giảm giá này chỉ áp dụng cho thời hạn ${row.duration}.`);
+    if (row.duration && duration && normalizeDurationLabel(row.duration) !== normalizeDurationLabel(duration)) {
+      throw new Error(`Mã giảm giá này chỉ áp dụng cho thời hạn ${normalizeDurationLabel(row.duration)}.`);
     }
     const val = Number(row.discount_value) || 0;
     const label =

@@ -2,102 +2,23 @@
  * js/ui/uiStore.js — Render Trang chủ (#view-home) & Chi tiết sản phẩm (#view-product-detail)
  */
 import { CATEGORIES, DURATION_VARIANTS, ACCOUNT_TYPES } from '../config/config.js';
-import { getVariantStock, getVariantPrice, isVariantManual, normalizeDurationLabel } from '../services/supabaseApi.js';
+import { getVariantStock, getVariantPrice, isVariantManual } from '../services/supabaseApi.js';
 import { formatVnd, escapeHtml } from './uiCommon.js';
 import { renderSaleDescriptionHtml } from './uiPrebuiltGuide.js';
+import { renderEmblemHtml, renderDetailMediaHtml, getProductDurations, getCheapestVariant } from './uiStoreVariants.js';
 
-function renderEmblemHtml(product) {
-  const emblem = escapeHtml(product?.emblem || 'ACC');
-  const url = String(product?.imageUrl || '').trim();
-  if (!/^https?:\/\//i.test(url)) return emblem;
-  return `<img class="product-logo-img" src="${escapeHtml(url)}" alt="${escapeHtml(product?.name || 'Logo')}" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false" /><span hidden>${emblem}</span>`;
-}
-
-function renderDetailMediaHtml(product, emblemEl) {
-  const emblem = escapeHtml(product?.emblem || 'ACC');
-  const url = String(product?.detailImageUrl || product?.imageUrl || '').trim();
-  const hasBanner = /^https?:\/\//i.test(url);
-  emblemEl?.classList.toggle('is-detail-banner', hasBanner);
-  if (!hasBanner) return emblem;
-  return `<img class="product-detail-banner-img" src="${escapeHtml(url)}" alt="${escapeHtml(product?.name || 'Banner')}" loading="eager" onerror="this.closest('#hero-emblem')?.classList.remove('is-detail-banner');this.hidden=true;this.nextElementSibling.hidden=false" /><span hidden>${emblem}</span>`;
-}
-
-export function getProductDurations(product) {
-  const allKeys = [
-    ...Object.keys(product?.variantPrices || {}),
-    ...Object.keys(product?.variantStocks || {}),
-    ...Object.keys(product?.manualStocks || {}),
-  ];
-  const custom = allKeys.map((k) => normalizeDurationLabel(k.split('|')[0])).filter(Boolean);
-  const labels = [...new Set([...DURATION_VARIANTS.map((d) => normalizeDurationLabel(d.label)), ...custom])];
-  return labels.map((label) => DURATION_VARIANTS.find((d) => normalizeDurationLabel(d.label) === label) || { label, multiplier: 1 });
-}
-
-export function getCheapestVariant(product) {
-  const durationList = getProductDurations(product);
-  const rawKeys = [
-    ...Object.keys(product?.variantPrices || {}),
-    ...Object.keys(product?.variantStocks || {}),
-    ...Object.keys(product?.manualStocks || {}),
-  ];
-  const allKeys = [...new Set(rawKeys.map((k) => {
-    const [d = '1 Tháng', t = ACCOUNT_TYPES[0].label] = k.split('|');
-    return `${normalizeDurationLabel(d)}|${t.trim()}`;
-  }))];
-  const candidates = allKeys.map((key) => {
-    const [label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label] = key.split('|');
-    const customPrice = getVariantPrice(product, label, accountType);
-    const price = customPrice >= 1000 ? customPrice : Number(product?.price) || 0;
-    const stock = getVariantStock(product, label, accountType);
-    const vIdx = Math.max(0, durationList.findIndex((d) => d.label === label));
-    const tObj = ACCOUNT_TYPES.find((t) => t.label === accountType) || ACCOUNT_TYPES[0];
-    const months = /tháng|thang/i.test(label) ? Math.max(1, Number.parseInt(label, 10) || 1) : 1;
-    const base1M = getVariantPrice(product, '1 Tháng', tObj.label);
-    const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
-    return { label, accountType: tObj.label, accountTypeId: tObj.id, variantIndex: vIdx, price, strike, stock };
-  });
-
-  const pricedInStock = candidates.filter((c) => c.stock > 0 && c.price >= 1000);
-  const anyInStock = candidates.filter((c) => c.stock > 0);
-  const priced = candidates.filter((c) => c.price >= 1000);
-  const pool = pricedInStock.length > 0 ? pricedInStock : anyInStock.length > 0 ? anyInStock : priced.length > 0 ? priced : candidates;
-  if (pool.length > 0) {
-    pool.sort((a, b) => a.price - b.price);
-    return pool[0];
-  }
-  const basePrice = Number(product?.price) || 0;
-  return {
-    label: product?.duration || '1 Tháng',
-    accountType: ACCOUNT_TYPES[0].label,
-    accountTypeId: ACCOUNT_TYPES[0].id,
-    variantIndex: 0,
-    price: basePrice,
-    stock: Number(product?.stock) || 0,
-  };
-}
+export { getProductDurations, getCheapestVariant };
 
 export function renderCategories(activeCategory, allProducts = []) {
   const container = document.getElementById('category-filters');
   if (!container) return;
-
   container.innerHTML = CATEGORIES.map((cat) => {
-    const count =
-      cat === 'Tất cả'
-        ? allProducts.length
-        : allProducts.filter((p) => p.category === cat).length;
-
+    const count = cat === 'Tất cả' ? allProducts.length : allProducts.filter((p) => p.category === cat).length;
     return `
-      <button
-        type="button"
-        class="filter-chip ${cat === activeCategory ? 'is-active' : ''}"
-        data-category="${escapeHtml(cat)}"
-        role="tab"
-        aria-selected="${cat === activeCategory}"
-      >
+      <button type="button" class="filter-chip ${cat === activeCategory ? 'is-active' : ''}" data-category="${escapeHtml(cat)}" role="tab" aria-selected="${cat === activeCategory}">
         <span>${escapeHtml(cat)}</span>
         <span class="result-count-pill">${count}</span>
-      </button>
-    `;
+      </button>`;
   }).join('');
 }
 
@@ -106,29 +27,45 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
 
   const durationList = getProductDurations(product);
   const isLifetime = String(product.duration).toLowerCase().includes('vĩnh viễn') && durationList.length <= DURATION_VARIANTS.length;
+  const durStockOf = (lbl) => ACCOUNT_TYPES.reduce((s, t) => s + getVariantStock(product, lbl, t.label), 0);
+  let resolvedIdx = Math.min(Math.max(0, selectedVariantIndex), Math.max(0, durationList.length - 1));
+  if (!isLifetime && durStockOf(durationList[resolvedIdx]?.label || '1 Tháng') <= 0) {
+    const firstInStockIdx = durationList.findIndex((d) => durStockOf(d.label) > 0);
+    if (firstInStockIdx !== -1) resolvedIdx = firstInStockIdx;
+  }
   const rawDurLabel = isLifetime
     ? product.duration
-    : durationList[Math.min(selectedVariantIndex, durationList.length - 1)]?.label || '1 Tháng';
+    : durationList[resolvedIdx]?.label || '1 Tháng';
   let activeType = ACCOUNT_TYPES.find((t) => t.id === selectedTypeId) || ACCOUNT_TYPES[0];
   if (getVariantStock(product, rawDurLabel, activeType.label) <= 0) {
     activeType = ACCOUNT_TYPES.find((t) => getVariantStock(product, rawDurLabel, t.label) > 0) || activeType;
   }
-  const typeMult = Number(activeType.multiplier) || 1;
-  const base1M = getVariantPrice(product, '1 Tháng', activeType.label) || Math.round((product.price * typeMult) / 1000) * 1000;
-  const durStockOf = (lbl) => ACCOUNT_TYPES.reduce((s, t) => s + getVariantStock(product, lbl, t.label), 0);
+  const fallbackBasePrice = Math.round(Number(product.price) || 0);
+  const base1M = getVariantPrice(product, '1 Tháng', activeType.label) || fallbackBasePrice;
   const variants = isLifetime
-    ? [{ label: product.duration, multiplier: 1, price: Math.round((product.price * typeMult) / 1000) * 1000, strike: 0, stock: getVariantStock(product, product.duration, activeType.label), durStock: durStockOf(product.duration) }]
+    ? [{
+        label: product.duration,
+        multiplier: 1,
+        price: getVariantPrice(product, product.duration, activeType.label) >= 1000
+          ? getVariantPrice(product, product.duration, activeType.label)
+          : fallbackBasePrice,
+        strike: 0,
+        stock: getVariantStock(product, product.duration, activeType.label),
+        durStock: durStockOf(product.duration),
+      }]
     : durationList.map((v) => {
         const customPrice = getVariantPrice(product, v.label, activeType.label);
-        const fallbackType = ACCOUNT_TYPES.find((t) => getVariantStock(product, v.label, t.label) > 0);
-        const altPrice = fallbackType ? getVariantPrice(product, v.label, fallbackType.label) : 0;
-        const price = customPrice >= 1000 ? customPrice : altPrice >= 1000 ? altPrice : Math.round((product.price * v.multiplier * typeMult) / 1000) * 1000;
+        const price = customPrice >= 1000 ? customPrice : fallbackBasePrice;
         const months = /tháng|thang/i.test(v.label) ? Math.max(1, Number.parseInt(v.label, 10) || 1) : 1;
         const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
         return { label: v.label, multiplier: v.multiplier, price, strike, stock: getVariantStock(product, v.label, activeType.label), durStock: durStockOf(v.label) };
       });
 
-  const activeIdx = Math.min(selectedVariantIndex, variants.length - 1);
+  let activeIdx = Math.min(resolvedIdx, variants.length - 1);
+  if (variants[activeIdx]?.durStock <= 0) {
+    const availIdx = variants.findIndex((v) => v.durStock > 0);
+    if (availIdx !== -1) activeIdx = availIdx;
+  }
   const currentVariant = variants[activeIdx];
   const variantStock = getVariantStock(product, currentVariant.label, activeType.label);
 
@@ -188,7 +125,7 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
       ? availTypes.map((t) => {
           const tStock = getVariantStock(product, currentVariant.label, t.label);
           const customT = getVariantPrice(product, currentVariant.label, t.label);
-          const tPrice = customT >= 1000 ? customT : Math.round((product.price * (currentVariant.multiplier || 1) * (Number(t.multiplier) || 1)) / 1000) * 1000;
+          const tPrice = customT >= 1000 ? customT : fallbackBasePrice;
           return `
         <button type="button" class="account-type-btn ${t.id === activeType.id ? 'is-active' : ''}" data-type-id="${escapeHtml(t.id)}">
           <strong>${escapeHtml(t.label)}</strong>

@@ -1,3 +1,12 @@
+function normalizeDurationLabel(raw = "1 Tháng"): string {
+  const cleaned = String(raw || "1 Tháng").replace(/\|/g, "-").trim().replace(/\s+/g, " ");
+  if (!cleaned) return "1 Tháng";
+  return cleaned
+    .split(" ")
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ""))
+    .join(" ");
+}
+
 export async function handlePromoAction(
   action: string,
   payload: Record<string, unknown>,
@@ -5,6 +14,45 @@ export async function handlePromoAction(
   svcHeaders: Record<string, string>,
   jsonRes: (data: unknown, status?: number) => Response
 ): Promise<Response | null> {
+  if (action === "delete_product") {
+    const productId = String(payload.productId || "").trim();
+    if (!productId) return jsonRes({ ok: false, error: "Thiếu productId cần xóa." }, 400);
+    const checkRes = await fetch(
+      `${supabaseUrl}/rest/v1/inventory_keys?product_id=eq.${encodeURIComponent(productId)}&is_sold=eq.false&select=id&limit=1`,
+      { headers: svcHeaders }
+    );
+    const unsold = checkRes.ok ? await checkRes.json() : [];
+    if (Array.isArray(unsold) && unsold.length > 0) {
+      return jsonRes({ ok: false, error: "Không thể xóa gói đang còn key chưa bán trong kho." }, 400);
+    }
+    const delRes = await fetch(
+      `${supabaseUrl}/rest/v1/products?id=eq.${encodeURIComponent(productId)}`,
+      { method: "DELETE", headers: svcHeaders }
+    );
+    if (!delRes.ok) {
+      const errText = await delRes.text();
+      if (/23503|foreign key|orders|inventory_keys/i.test(errText)) {
+        return jsonRes(
+          {
+            ok: false,
+            error: "Gói này đã có lịch sử đơn hàng hoặc key đã bán, không thể xóa vĩnh viễn. Vui lòng dùng nút 'Tạm ẩn'!",
+          },
+          400
+        );
+      }
+      return jsonRes({ ok: false, error: errText }, 400);
+    }
+    return jsonRes({ ok: true, deletedId: productId });
+  }
+
+  if (action === "list_orders") {
+    const res = await fetch(`${supabaseUrl}/rest/v1/orders?select=*&order=created_at.desc&limit=500`, {
+      headers: svcHeaders,
+    });
+    if (!res.ok) return jsonRes({ ok: false, error: await res.text() }, 400);
+    return jsonRes({ ok: true, data: await res.json() });
+  }
+
   if (action === "list_promos") {
     const res = await fetch(`${supabaseUrl}/rest/v1/promo_codes?select=*&order=created_at.desc`, {
       headers: svcHeaders,
@@ -18,7 +66,8 @@ export async function handlePromoAction(
     const discountType = payload.discount_type === "fixed" ? "fixed" : "percent";
     const discountValue = Math.round(Number(payload.discount_value) || 0);
     const productId = String(payload.product_id || "").trim() || null;
-    const duration = String(payload.duration || "").trim() || null;
+    const rawDuration = String(payload.duration || "").trim();
+    const duration = rawDuration ? normalizeDurationLabel(rawDuration) : null;
 
     if (!/^[A-Z0-9_-]{3,32}$/.test(code)) {
       return jsonRes({ ok: false, error: "Mã giảm giá gồm 3-32 ký tự chữ/số/gạch ngang." }, 400);

@@ -1,8 +1,8 @@
 /**
- * js/ui/uiPrebuiltGuide.js — Tầng 3: Hướng dẫn đăng nhập 2FA & Chính sách bảo hành cho Tài khoản cấp sẵn
+ * js/ui/uiPrebuiltGuide.js — Tầng 3: Hướng dẫn đăng nhập 2FA, Che mật khẩu & Chính sách bảo hành cho Tài khoản cấp sẵn
  */
 import { PREBUILT_2FA_VIDEO_URL } from '../config/config.js';
-import { escapeHtml } from './uiCommon.js';
+import { escapeHtml, copyText, downloadTextFile } from './uiCommon.js';
 
 export function maskCredentialText(rawText = '') {
   return String(rawText || '')
@@ -14,6 +14,68 @@ export function maskCredentialText(rawText = '') {
       return [parts[0], ...parts.slice(1).map((_, idx) => (idx === 0 ? '••••••••' : '••••••'))].join('|');
     })
     .join('\n');
+}
+
+export function applyDeliveredMaskState(order) {
+  const isManualPending = String(order?.status || '').toUpperCase() === 'PENDING_MANUAL';
+  const rawCreds = isManualPending
+    ? `Đã thanh toán thành công! Vui lòng liên hệ Admin qua Zalo (0373786203) hoặc Telegram (@Acc2Hand) kèm mã đơn #${order.orderCode} để được hỗ trợ kích hoạt nhanh nhất.`
+    : (order?.credentials || []).join('\n');
+  const hasMask = !isManualPending && rawCreds.includes('|');
+  const masked = hasMask ? maskCredentialText(rawCreds) : rawCreds;
+  const preEl = document.getElementById('delivered-credentials');
+  if (preEl) {
+    preEl.dataset.raw = rawCreds;
+    preEl.dataset.mask = masked;
+    preEl.dataset.masked = hasMask ? 'true' : 'false';
+    preEl.textContent = masked;
+  }
+  const maskBtn = document.getElementById('toggle-delivered-mask-btn');
+  if (maskBtn) { maskBtn.hidden = !hasMask; maskBtn.textContent = 'Hiện'; }
+  const copyBtn = document.getElementById('copy-all-credentials-btn');
+  const dlBtn = document.getElementById('download-credentials-btn');
+  const contactBox = document.getElementById('delivered-manual-contact');
+  const guideBox = document.getElementById('delivered-prebuilt-guide');
+  if (copyBtn) copyBtn.hidden = isManualPending;
+  if (dlBtn) dlBtn.hidden = isManualPending;
+  if (contactBox) contactBox.hidden = !isManualPending;
+  if (guideBox) {
+    const showGuide = isPrebuiltAccountOrder(order);
+    guideBox.hidden = !showGuide;
+    guideBox.innerHTML = showGuide ? renderPrebuiltAccountGuideHtml({ compact: false, durationLabel: order?.duration || '' }) : '';
+  }
+}
+
+export function toggleDeliveredMaskUi() {
+  const preEl = document.getElementById('delivered-credentials');
+  const maskBtn = document.getElementById('toggle-delivered-mask-btn');
+  if (!preEl) return;
+  const nextMask = preEl.dataset.masked !== 'true';
+  preEl.dataset.masked = String(nextMask);
+  preEl.textContent = nextMask ? preEl.dataset.mask || '' : preEl.dataset.raw || '';
+  if (maskBtn) maskBtn.textContent = nextMask ? 'Hiện' : 'Ẩn';
+}
+
+export function getDeliveredRawText() {
+  const preEl = document.getElementById('delivered-credentials');
+  return preEl?.dataset.raw || preEl?.textContent || '';
+}
+
+export function bindDeliveredActionEvents() {
+  document.getElementById('toggle-delivered-mask-btn')?.addEventListener('click', toggleDeliveredMaskUi);
+  document.getElementById('copy-all-credentials-btn')?.addEventListener('click', (e) => {
+    const text = getDeliveredRawText();
+    if (text) copyText(text, 'danh sách tài khoản', e.currentTarget);
+  });
+  document.getElementById('download-credentials-btn')?.addEventListener('click', () => {
+    const code = document.getElementById('delivered-order-code')?.textContent || 'ACC';
+    const text = getDeliveredRawText();
+    if (text) downloadTextFile(`${code}-accounts.txt`, text);
+  });
+  document.getElementById('delivered-prebuilt-guide')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action="open-prebuilt-guide"]');
+    if (btn) openPrebuiltGuideModal(btn.dataset.duration || '');
+  });
 }
 
 export function isPrebuiltAccountOrder(order) {
@@ -32,7 +94,6 @@ export function buildPrebuiltGuideFullHtml(durationLabel = '') {
   const warrantyScope = durationLabel
     ? `07 ngày (hoặc trọn thời hạn gói ${escapeHtml(durationLabel)} ghi trên đơn hàng)`
     : '07 ngày (hoặc theo thời hạn gói ghi trên đơn hàng)';
-
   const videoSectionHtml = hasVideo
     ? `<div class="prebuilt-section">
         <h4>🎬 Video hướng dẫn thao tác mã 2FA (Tài khoản cấp sẵn)</h4>
@@ -56,7 +117,6 @@ export function buildPrebuiltGuideFullHtml(durationLabel = '') {
           <li class="prebuilt-highlight"><strong>⚠️ Điều kiện bảo hành bắt buộc:</strong> Quay video màn hình liền mạch từ lúc bắt đầu nhập tài khoản lần đầu tiên cho đến khi kiểm tra gói cước để được hỗ trợ <strong>1 đổi 1 ngay lập tức</strong> nếu phát sinh lỗi sai mật khẩu hoặc thiếu gói.</li>
         </ul>
       </div>
-
       <div class="prebuilt-section">
         <h4>2️⃣ Quy tắc sử dụng 7 – 10 ngày đầu</h4>
         <ul class="prebuilt-list">
@@ -64,9 +124,7 @@ export function buildPrebuiltGuideFullHtml(durationLabel = '') {
           <li><strong>Không đổi mật khẩu, email khôi phục hay 2FA trong 48 giờ đầu.</strong> Sau 2–7 ngày khi tài khoản đã quen thiết bị mới, có thể vào <code>myaccount.google.com/security</code> để đổi mật khẩu và tạo 2FA riêng.</li>
         </ul>
       </div>
-
       ${videoSectionHtml}
-
       <div class="prebuilt-section is-warning">
         <h4>3️⃣ Lưu ý cấm &amp; 🛡️ Chính sách bảo hành (Từ chối bảo hành nếu vi phạm)</h4>
         <ul class="prebuilt-list">
@@ -83,22 +141,13 @@ export function buildPrebuiltGuideFullHtml(durationLabel = '') {
 export function renderPrebuiltAccountGuideHtml({ compact = false, durationLabel = '' } = {}) {
   const safeDur = escapeHtml(durationLabel || '');
   if (compact) {
-    return `
-      <div class="prebuilt-pill-wrap">
-        <button type="button" class="prebuilt-guide-pill-btn" data-action="open-prebuilt-guide" data-duration="${safeDur}">
-          <span>🛡️ Hướng dẫn 2FA &amp; Bảo hành</span>
-        </button>
-      </div>
-    `;
+    return `<div class="prebuilt-pill-wrap"><button type="button" class="prebuilt-guide-pill-btn" data-action="open-prebuilt-guide" data-duration="${safeDur}"><span>🛡️ Hướng dẫn 2FA &amp; Bảo hành</span></button></div>`;
   }
-
   return `
     <div class="prebuilt-quick-box">
       <div class="prebuilt-quick-head">
         <strong>🛡️ Lưu ý quan trọng cho Tài khoản cấp sẵn</strong>
-        <button type="button" class="prebuilt-guide-pill-btn" data-action="open-prebuilt-guide" data-duration="${safeDur}">
-          Xem đầy đủ hướng dẫn 2FA &amp; Bảo hành ▸
-        </button>
+        <button type="button" class="prebuilt-guide-pill-btn" data-action="open-prebuilt-guide" data-duration="${safeDur}">Xem đầy đủ hướng dẫn 2FA &amp; Bảo hành ▸</button>
       </div>
       <ul class="prebuilt-quick-list">
         <li><strong>1. Quay video màn hình liền mạch</strong> khi đăng nhập lần đầu để được bảo hành <strong>1 đổi 1 tức thì</strong>.</li>
@@ -115,25 +164,32 @@ export function openPrebuiltGuideModal(durationLabel = '') {
   const body = document.getElementById('app-dialog-body');
   const cancelBtn = document.getElementById('app-dialog-cancel-btn');
   const confirmBtn = document.getElementById('app-dialog-confirm-btn');
+  const closeBtn = document.getElementById('app-dialog-close-btn');
   if (!modal || !body) return;
 
   if (eyebrow) eyebrow.textContent = 'Tài khoản cấp sẵn • Quy định & Bảo hành';
   if (title) title.textContent = 'Hướng dẫn đăng nhập 2FA & Chính sách bảo hành';
   body.innerHTML = buildPrebuiltGuideFullHtml(durationLabel);
   if (cancelBtn) cancelBtn.hidden = true;
+
+  const closeGuideModal = (e) => {
+    if (e) e.preventDefault();
+    modal.hidden = true;
+    if (cancelBtn) cancelBtn.hidden = false;
+    if (confirmBtn) confirmBtn.onclick = null;
+    if (closeBtn) closeBtn.onclick = null;
+    modal.onclick = null;
+    const isCheckoutOpen = document.getElementById('checkout-modal')?.hidden === false;
+    document.body.style.overflow = isCheckoutOpen ? 'hidden' : '';
+  };
+
   if (confirmBtn) {
     confirmBtn.textContent = 'Đã hiểu & Đóng';
     confirmBtn.className = 'btn btn-primary';
-    confirmBtn.onclick = (e) => {
-      e.preventDefault();
-      modal.hidden = true;
-      if (cancelBtn) cancelBtn.hidden = false;
-      confirmBtn.onclick = null;
-      if (document.getElementById('checkout-modal')?.hidden !== false) {
-        document.body.style.overflow = '';
-      }
-    };
+    confirmBtn.onclick = closeGuideModal;
   }
+  if (closeBtn) closeBtn.onclick = closeGuideModal;
+  modal.onclick = (e) => { if (e.target.id === 'app-dialog-modal') closeGuideModal(e); };
   modal.hidden = false;
   document.body.style.overflow = 'hidden';
 }

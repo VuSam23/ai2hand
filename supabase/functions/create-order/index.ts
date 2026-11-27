@@ -135,19 +135,14 @@ serve(async (req) => {
       if (q > 0) manualMap[nk] = (manualMap[nk] || 0) + q;
     }
     const manualStock = Math.max(0, Math.round(Number(manualMap[variantKey]) || 0));
-    const isManual = manualStock > 0 || accountType === "Dùng chung" || accountType === "Nâng cấp chính chủ";
-
-    if (manualStock > 0) {
-      if (manualStock < qty) {
-        return jsonRes({ ok: false, error: `Số lượng vượt quá suất mở bán (${manualStock}).` }, 400);
-      }
-    } else {
+    let availStock = 0;
+    if (accountType === "TK cấp sẵn" || manualStock === 0) {
       const keyRes = await fetch(
         `${SUPABASE_URL}/rest/v1/inventory_keys?product_id=eq.${encodeURIComponent(productId)}&is_sold=eq.false&select=duration,account_type`,
         { headers: svcHeaders }
       );
       const keyRows = await keyRes.json();
-      const availStock = Array.isArray(keyRows)
+      availStock = Array.isArray(keyRows)
         ? keyRows.filter(
             (k) =>
               (normalizeDurationLabel(k.duration || "1 Tháng") === duration && (k.account_type || "TK cấp sẵn") === accountType) ||
@@ -155,9 +150,21 @@ serve(async (req) => {
               k.account_type == null
           ).length
         : 0;
-      if (availStock < qty) {
-        return jsonRes({ ok: false, error: `Số lượng vượt quá tồn kho (${availStock}).` }, 400);
-      }
+    }
+
+    const useAutoKeys = accountType === "TK cấp sẵn" && availStock > 0;
+    const isManual =
+      !useAutoKeys &&
+      (manualStock > 0 || accountType === "Dùng chung" || accountType === "Nâng cấp chính chủ");
+
+    if (useAutoKeys && availStock < qty) {
+      return jsonRes({ ok: false, error: `Số lượng vượt quá tồn kho (${availStock}).` }, 400);
+    }
+    if (!useAutoKeys && manualStock > 0 && manualStock < qty) {
+      return jsonRes({ ok: false, error: `Số lượng vượt quá suất mở bán (${manualStock}).` }, 400);
+    }
+    if (!useAutoKeys && manualStock === 0 && availStock < qty) {
+      return jsonRes({ ok: false, error: `Số lượng vượt quá tồn kho (${availStock}).` }, 400);
     }
 
     let promo: Record<string, unknown> | null = null;
@@ -172,8 +179,8 @@ serve(async (req) => {
       if (promo.product_id && promo.product_id !== productId) {
         return jsonRes({ ok: false, error: "Mã giảm giá không áp dụng cho gói sản phẩm này." }, 400);
       }
-      if (promo.duration && promo.duration !== duration) {
-        return jsonRes({ ok: false, error: `Mã giảm giá chỉ áp dụng cho thời hạn ${promo.duration}.` }, 400);
+      if (promo.duration && normalizeDurationLabel(String(promo.duration)) !== duration) {
+        return jsonRes({ ok: false, error: `Mã giảm giá chỉ áp dụng cho thời hạn ${normalizeDurationLabel(String(promo.duration))}.` }, 400);
       }
     }
 

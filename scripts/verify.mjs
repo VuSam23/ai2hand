@@ -19,6 +19,11 @@ function walkFiles(dir, exts) {
 
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const htmlIds = new Set([...html.matchAll(/\sid=["']([^"']+)["']/g)].map((m) => m[1]));
+const inlineEventRegex = /\bon(?:error|click|change|submit|input|load)\s*=\s*["']/i;
+
+if (inlineEventRegex.test(html)) {
+  errors.push('[CSP_INLINE_HANDLER] index.html contains inline event handler violating script-src self');
+}
 
 const jsFiles = walkFiles(path.join(ROOT, 'js'), ['.js', '.mjs']);
 const fnFiles = walkFiles(path.join(ROOT, 'supabase', 'functions'), ['.ts', '.js']);
@@ -38,6 +43,9 @@ for (const file of jsFiles) {
 
   if (content.includes('SERVICE_ROLE_KEY') || content.includes('WEBHOOK_SECRET')) {
     errors.push(`[SECRET_LEAK] ${rel} contains server secret identifier`);
+  }
+  if (inlineEventRegex.test(content)) {
+    errors.push(`[CSP_INLINE_HANDLER] ${rel} contains inline event handler violating script-src self`);
   }
   if (content.includes('setInterval(') && !content.includes('clearInterval(')) {
     errors.push(`[RESOURCE_LEAK] ${rel} uses setInterval without clearInterval`);

@@ -13,12 +13,10 @@ const ADMIN_EMAILS = (Deno.env.get("ADMIN_EMAILS") ?? "")
 async function verifyAdminUser(authHeader: string) {
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
   if (!token) return { status: 401, email: "" };
-
   const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${token}` },
   });
   if (!res.ok) return { status: 401, email: "" };
-
   const user = await res.json();
   const email = String(user?.email ?? "").toLowerCase();
   if (!email) return { status: 401, email: "" };
@@ -61,15 +59,9 @@ function sanitizeProductPayload(raw: Record<string, unknown>, idOverride?: strin
   if (raw.description !== undefined) {
     row.description = String(raw.description || "Tài khoản bản quyền chính hãng, bảo hành 1 đổi 1.").trim();
   }
-  if (raw.image_url !== undefined) {
-    row.image_url = String(raw.image_url || "").trim();
-  }
-  if (raw.detail_image_url !== undefined) {
-    row.detail_image_url = String(raw.detail_image_url || "").trim();
-  }
-  if (raw.warranty !== undefined && String(raw.warranty).trim()) {
-    row.warranty = String(raw.warranty).trim();
-  }
+  if (raw.image_url !== undefined) row.image_url = String(raw.image_url || "").trim();
+  if (raw.detail_image_url !== undefined) row.detail_image_url = String(raw.detail_image_url || "").trim();
+  if (raw.warranty !== undefined && String(raw.warranty).trim()) row.warranty = String(raw.warranty).trim();
   row.is_active = raw.is_active !== undefined ? Boolean(raw.is_active) : true;
   return row;
 }
@@ -118,13 +110,12 @@ serve(async (req) => {
         payload.is_active !== undefined
           ? Boolean(payload.is_active)
           : (Number.parseInt(String(payload.stock ?? 0), 10) || 0) > 0;
-      const patchBody = { is_active: isActive };
       const res = await fetch(
         `${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(payload.productId)}`,
         {
           method: "PATCH",
           headers: { ...svcHeaders, Prefer: "return=representation" },
-          body: JSON.stringify(patchBody),
+          body: JSON.stringify({ is_active: isActive }),
         }
       );
       if (!res.ok) return jsonRes({ ok: false, error: await res.text() }, 400);
@@ -186,37 +177,6 @@ serve(async (req) => {
       return jsonRes({ ok: true, data: data[0] });
     }
 
-    if (action === "delete_product") {
-      const productId = String(payload.productId || "").trim();
-      if (!productId) return jsonRes({ ok: false, error: "Thiếu productId cần xóa." }, 400);
-      const checkRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/inventory_keys?product_id=eq.${encodeURIComponent(productId)}&is_sold=eq.false&select=id&limit=1`,
-        { headers: svcHeaders }
-      );
-      const unsold = checkRes.ok ? await checkRes.json() : [];
-      if (Array.isArray(unsold) && unsold.length > 0) {
-        return jsonRes({ ok: false, error: "Không thể xóa gói đang còn key chưa bán trong kho." }, 400);
-      }
-      const delRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(productId)}`,
-        { method: "DELETE", headers: svcHeaders }
-      );
-      if (!delRes.ok) {
-        const errText = await delRes.text();
-        if (/23503|foreign key|orders|inventory_keys/i.test(errText)) {
-          return jsonRes(
-            {
-              ok: false,
-              error: "Gói này đã có lịch sử đơn hàng hoặc key đã bán, không thể xóa vĩnh viễn. Vui lòng dùng nút 'Tạm ẩn'!",
-            },
-            400
-          );
-        }
-        return jsonRes({ ok: false, error: errText }, 400);
-      }
-      return jsonRes({ ok: true, deletedId: productId });
-    }
-
     if (action === "import_keys") {
       const productId = String(payload.productId || "").trim();
       if (!productId) return jsonRes({ ok: false, error: "Thiếu productId gói cần nạp kho" }, 400);
@@ -267,14 +227,6 @@ serve(async (req) => {
       const availRows = countRes.ok ? await countRes.json() : [];
       const updatedStock = Array.isArray(availRows) ? availRows.length : uniqueLines.length;
       return jsonRes({ ok: true, importedCount: uniqueLines.length, duplicateCount, updatedStock });
-    }
-
-    if (action === "list_orders") {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*&order=created_at.desc&limit=500`, {
-        headers: svcHeaders,
-      });
-      if (!res.ok) return jsonRes({ ok: false, error: await res.text() }, 400);
-      return jsonRes({ ok: true, data: await res.json() });
     }
 
     const promoRes = await handlePromoAction(action, payload, SUPABASE_URL, svcHeaders, jsonRes);

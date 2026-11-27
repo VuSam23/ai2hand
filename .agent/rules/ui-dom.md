@@ -8,3 +8,5 @@
    - Không để tràn ngang (`overflow-x`).
    - Bảng lịch sử đơn chuyển sang Card dọc (`css/mobile.css`); Modal hiển thị dạng Bottom Sheet (`max-height: 90dvh`); nút bấm tối thiểu `44px`.
    - Không ẩn các tab quan trọng sai trạng thái (dùng thuộc tính `[hidden]` với `!important` trong `tokens.css`).
+6. **Thời hạn biến thể linh hoạt (`duration`):**
+   - Ô thời hạn Admin (`#admin-import-duration`, `#admin-promo-duration`, dialog biến thể) dùng `<input type="text" list="duration-presets">`. Storefront (`getProductDurations`) phải gom đủ mọi thời hạn từ `variantPrices`/`variantStocks`/`manualStocks` và chỉ tính giá gạch ngang (`strike`) theo bội số tháng khi nhãn có chứa `tháng`.

@@ -85,7 +85,12 @@ export function getVariantPrice(product, duration = '1 Tháng', accountType = 'T
 
 export function isVariantManual(product, duration = '1 Tháng', accountType = 'TK cấp sẵn') {
   if (!product || product.isActive === false) return false;
-  const normKey = `${normalizeDurationLabel(duration)}|${String(accountType || 'TK cấp sẵn').trim()}`;
+  const cleanType = String(accountType || 'TK cấp sẵn').trim();
+  const normKey = `${normalizeDurationLabel(duration)}|${cleanType}`;
+  if (cleanType === 'TK cấp sẵn') {
+    const autoVariants = mergeNormalizedMap(product.variantStocks, 'sum');
+    if (Number(autoVariants[normKey] || 0) > 0) return false;
+  }
   const manualMap = mergeNormalizedMap(product.manualStocks, 'sum');
   return Math.max(0, Number(manualMap[normKey] || 0)) > 0;
 }
@@ -95,13 +100,15 @@ export function getVariantStock(product, duration = '1 Tháng', accountType = 'T
   const normDur = normalizeDurationLabel(duration);
   const cleanType = String(accountType || 'TK cấp sẵn').trim();
   const key = `${normDur}|${cleanType}`;
+  const variants = mergeNormalizedMap(product.variantStocks, 'sum');
+  const autoQty = Math.max(0, Number(variants[key] || 0));
+  if (cleanType === 'TK cấp sẵn' && autoQty > 0) return autoQty;
   const manualMap = mergeNormalizedMap(product.manualStocks, 'sum');
   const manualQty = Math.max(0, Number(manualMap[key] || 0));
   if (manualQty > 0) return manualQty;
   if (product.stock === 0) return 0;
-  const variants = mergeNormalizedMap(product.variantStocks, 'sum');
   const hasStockMap = Object.keys(variants).length > 0 || Object.keys(manualMap).length > 0;
-  if (hasStockMap) return Number(variants[key] || 0);
+  if (hasStockMap) return autoQty;
   const defDur = normalizeDurationLabel(product.duration || '1 Tháng');
   const defType = product.accountType || 'TK cấp sẵn';
   return normDur === defDur && cleanType === defType ? Number(product.stock) || 0 : 0;

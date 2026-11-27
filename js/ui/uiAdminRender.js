@@ -3,6 +3,7 @@
  */
 import { isSupabaseConfigured } from '../config/config.js';
 import { getAdminSession } from '../services/adminApi.js';
+import { normalizeDurationLabel } from '../services/supabaseMappers.js';
 import { formatVnd, escapeHtml } from './uiCommon.js';
 import { renderAdminStats } from './uiAdminStats.js';
 
@@ -24,7 +25,7 @@ export function switchAdminTab(tabKey = 'stats') {
 
 export function syncImportPriceInput(products = []) {
   const pid = document.getElementById('admin-import-product')?.value || '';
-  const dur = (document.getElementById('admin-import-duration')?.value || '').replace(/\|/g, '-').trim() || '1 Tháng';
+  const dur = normalizeDurationLabel(document.getElementById('admin-import-duration')?.value || '1 Tháng');
   const type = document.getElementById('admin-import-type')?.value || 'TK cấp sẵn';
   const priceEl = document.getElementById('admin-import-price');
   const prod = products.find((p) => p.id === pid);
@@ -90,8 +91,7 @@ export function renderAdminOrders(orders = null) {
             ${isManual ? `<button type="button" class="btn btn-secondary" data-action="complete-manual-order" data-order-code="${escapeHtml(code)}">Giao key / Hoàn tất</button>` : ''}
             ${isPaid && cred ? `<button type="button" class="copy-btn" data-copy-raw="${escapeHtml(cred)}">Copy key</button>` : ''}
           </div>
-        </div>
-      `;
+        </div>`;
     })
     .join('');
 }
@@ -107,9 +107,7 @@ export function renderAdminPromos(promos = [], products = []) {
     .map((pm) => {
       const isActive = pm.is_active !== false;
       const valText = pm.discount_type === 'percent' ? `${pm.discount_value}%` : formatVnd(pm.discount_value);
-      const prodName = pm.product_id
-        ? products.find((p) => p.id === pm.product_id)?.name || pm.product_id
-        : 'Toàn shop';
+      const prodName = pm.product_id ? products.find((p) => p.id === pm.product_id)?.name || pm.product_id : 'Toàn shop';
       const durText = pm.duration || 'Mọi thời hạn';
       return `
         <div class="admin-stock-row">
@@ -123,8 +121,7 @@ export function renderAdminPromos(promos = [], products = []) {
             </button>
             <button type="button" class="btn btn-ghost text-error" data-action="delete-promo" data-id="${escapeHtml(pm.id)}" data-code="${escapeHtml(pm.code)}">Xóa</button>
           </div>
-        </div>
-      `;
+        </div>`;
     })
     .join('');
 }
@@ -134,15 +131,9 @@ export function renderAdminView(products, orders = null, promos = null) {
   const isLive = isSupabaseConfigured();
   const session = getAdminSession();
   const statusEl = document.getElementById('admin-auth-status');
-  if (statusEl) {
-    statusEl.textContent = session?.isAdmin
-      ? `Phiên Quản trị viên Supabase: ${session.email}`
-      : 'Chưa xác thực quyền Admin.';
-  }
-
+  if (statusEl) statusEl.textContent = session?.isAdmin ? `Phiên Quản trị viên Supabase: ${session.email}` : 'Chưa xác thực quyền Admin.';
   const headingEl = document.getElementById('admin-heading');
   if (headingEl) headingEl.textContent = isLive ? 'Thêm Gói Tài Khoản Mới' : 'Thêm Gói Tài Khoản Mới (Demo)';
-
   const resetBtn = document.getElementById('admin-reset-btn');
   if (resetBtn) resetBtn.hidden = isLive;
 
@@ -154,25 +145,19 @@ export function renderAdminView(products, orders = null, promos = null) {
   const importSelect = document.getElementById('admin-import-product');
   if (importSelect) {
     const prev = importSelect.value || '';
-    importSelect.innerHTML = products
-      .map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} (Tồn: ${p.stock})</option>`)
-      .join('');
+    importSelect.innerHTML = products.map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} (Tồn: ${p.stock})</option>`).join('');
     if (prev && products.some((p) => p.id === prev)) importSelect.value = prev;
   }
   const promoSelect = document.getElementById('admin-promo-product');
   if (promoSelect) {
     const prevPromo = promoSelect.value || '';
-    promoSelect.innerHTML = `<option value="">Toàn bộ cửa hàng</option>${products
-      .map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`)
-      .join('')}`;
+    promoSelect.innerHTML = `<option value="">Toàn bộ cửa hàng</option>${products.map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('')}`;
     if (prevPromo && products.some((p) => p.id === prevPromo)) promoSelect.value = prevPromo;
   }
   const keysFilter = document.getElementById('admin-keys-filter');
   if (keysFilter) {
     const prevKeyProd = keysFilter.value || '';
-    keysFilter.innerHTML = `<option value="">Tất cả sản phẩm</option>${products
-      .map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`)
-      .join('')}`;
+    keysFilter.innerHTML = `<option value="">Tất cả sản phẩm</option>${products.map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('')}`;
     if (prevKeyProd && products.some((p) => p.id === prevKeyProd)) keysFilter.value = prevKeyProd;
   }
   syncImportPriceInput(products);

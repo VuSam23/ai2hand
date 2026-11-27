@@ -4,37 +4,17 @@
 import { CONTACT_REGEX } from '../config/config.js';
 import { validatePromoCode } from '../services/promoApi.js';
 import {
-  createOrder,
-  confirmPaymentAndDeliver,
-  fetchProducts,
-  fetchOwnOrderByCode,
-  pollOrderStatus,
-  stopOrderPolling,
+  createOrder, confirmPaymentAndDeliver, fetchProducts, fetchOwnOrderByCode, pollOrderStatus, stopOrderPolling,
 } from '../services/supabaseApi.js';
-import { showToast, copyText, downloadTextFile } from './uiCommon.js';
-import { openPrebuiltGuideModal } from './uiPrebuiltGuide.js';
+import { showToast, copyText } from './uiCommon.js';
+import { bindDeliveredActionEvents } from './uiPrebuiltGuide.js';
 import {
-  calculateCheckoutTotal,
-  updateCheckoutPriceUi,
-  openCheckoutModal,
-  closeCheckoutModal,
-  switchModalStep,
-  renderVietQrStep,
-  renderDeliveredStep,
-  syncQtyControls,
-  syncCheckoutVariantUi,
-  resolveCheckoutVariant,
-  syncCheckoutAccountTypeOptions,
+  calculateCheckoutTotal, updateCheckoutPriceUi, openCheckoutModal, closeCheckoutModal, switchModalStep,
+  renderVietQrStep, renderDeliveredStep, syncQtyControls, syncCheckoutVariantUi, resolveCheckoutVariant, syncCheckoutAccountTypeOptions,
 } from './uiCheckoutSteps.js';
 
 export {
-  calculateCheckoutTotal,
-  updateCheckoutPriceUi,
-  openCheckoutModal,
-  closeCheckoutModal,
-  switchModalStep,
-  renderVietQrStep,
-  renderDeliveredStep,
+  calculateCheckoutTotal, updateCheckoutPriceUi, openCheckoutModal, closeCheckoutModal, switchModalStep, renderVietQrStep, renderDeliveredStep,
 };
 
 export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData }) {
@@ -71,39 +51,31 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
     syncQtyControls(clamped, availStock);
     updateCheckoutPriceUi(state);
   };
-  document.getElementById('checkout-qty-minus')?.addEventListener('click', () => {
-    adjustQty((Number.parseInt(qtyInput?.value, 10) || 1) - 1);
-  });
-  document.getElementById('checkout-qty-plus')?.addEventListener('click', () => {
-    adjustQty((Number.parseInt(qtyInput?.value, 10) || 1) + 1);
-  });
+  document.getElementById('checkout-qty-minus')?.addEventListener('click', () => adjustQty((Number.parseInt(qtyInput?.value, 10) || 1) - 1));
+  document.getElementById('checkout-qty-plus')?.addEventListener('click', () => adjustQty((Number.parseInt(qtyInput?.value, 10) || 1) + 1));
+
+  const setVoucherNote = (text = '', isError = false, hidden = false) => {
+    const noteEl = document.getElementById('checkout-discount-note');
+    if (!noteEl) return;
+    noteEl.hidden = hidden;
+    noteEl.textContent = text;
+    noteEl.classList.toggle('is-error', isError);
+  };
 
   const handleVariantChange = async (e) => {
     if (!state.checkoutProduct) return;
     const dur = document.getElementById('checkout-duration-select')?.value || '1 Tháng';
     const typeSelect = document.getElementById('checkout-account-type-select');
-    if (e?.target?.id === 'checkout-duration-select') {
-      syncCheckoutAccountTypeOptions(state, dur, typeSelect?.value || '');
-    }
-    const type = typeSelect?.value || 'TK cấp sẵn';
-    const chosen = resolveCheckoutVariant(state.checkoutProduct, dur, type);
+    if (e?.target?.id === 'checkout-duration-select') syncCheckoutAccountTypeOptions(state, dur, typeSelect?.value || '');
+    const chosen = resolveCheckoutVariant(state.checkoutProduct, dur, typeSelect?.value || 'TK cấp sẵn');
     syncCheckoutVariantUi(state, chosen);
     if (state.activeVoucher) {
-      const noteEl = document.getElementById('checkout-discount-note');
       try {
         await validatePromoCode(state.activeVoucher.code, state.checkoutProduct?.id, chosen.label);
-        if (noteEl) {
-          noteEl.hidden = false;
-          noteEl.textContent = `Đã áp dụng ${state.activeVoucher.code}: ${state.activeVoucher.label}!`;
-          noteEl.classList.remove('is-error');
-        }
+        setVoucherNote(`Đã áp dụng ${state.activeVoucher.code}: ${state.activeVoucher.label}!`, false, false);
       } catch (err) {
         state.activeVoucher = null;
-        if (noteEl) {
-          noteEl.hidden = false;
-          noteEl.textContent = err.message || 'Mã giảm giá không áp dụng cho gói vừa chọn.';
-          noteEl.classList.add('is-error');
-        }
+        setVoucherNote(err.message || 'Mã giảm giá không áp dụng cho gói vừa chọn.', true, false);
       }
       updateCheckoutPriceUi(state);
     }
@@ -113,30 +85,21 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
 
   document.getElementById('checkout-voucher-btn')?.addEventListener('click', async () => {
     const code = document.getElementById('checkout-voucher-input')?.value.trim().toUpperCase() || '';
-    const noteEl = document.getElementById('checkout-discount-note');
-    if (!noteEl) return;
-
     if (!code) {
       state.activeVoucher = null;
-      noteEl.hidden = true;
-      updateCheckoutPriceUi(state);
-      return;
+      setVoucherNote('', false, true);
+      return updateCheckoutPriceUi(state);
     }
-
     try {
       const duration = state.checkoutVariant?.label || state.checkoutProduct?.duration || '1 Tháng';
       const promo = await validatePromoCode(code, state.checkoutProduct?.id, duration);
       state.activeVoucher = promo;
-      noteEl.hidden = false;
-      noteEl.textContent = `Đã áp dụng ${promo.code}: ${promo.label}!`;
-      noteEl.classList.remove('is-error');
+      setVoucherNote(`Đã áp dụng ${promo.code}: ${promo.label}!`, false, false);
       updateCheckoutPriceUi(state);
       showToast(`Áp dụng thành công mã ${promo.code}!`, 'success');
     } catch (err) {
       state.activeVoucher = null;
-      noteEl.hidden = false;
-      noteEl.textContent = err.message || 'Mã giảm giá không hợp lệ.';
-      noteEl.classList.add('is-error');
+      setVoucherNote(err.message || 'Mã giảm giá không hợp lệ.', true, false);
       updateCheckoutPriceUi(state);
       showToast(err.message || 'Mã giảm giá không hợp lệ.', 'error');
     }
@@ -148,8 +111,7 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
     await refreshAccountData();
     renderDeliveredStep(completedOrder);
     if (completedOrder.status === 'PENDING_MANUAL') {
-      showToast(`Đơn ${completedOrder.orderCode} đã thanh toán! Admin sẽ liên hệ qua Email/Zalo để cấp key.`, 'info');
-      return;
+      return showToast(`Đơn ${completedOrder.orderCode} đã thanh toán! Admin sẽ liên hệ qua Email/Zalo để cấp key.`, 'info');
     }
     showToast(`Đơn ${completedOrder.orderCode} đã thanh toán thành công!`, 'success');
   };
@@ -157,9 +119,8 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
   document.getElementById('checkout-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!state.checkoutProduct) return;
-    const contactInput = document.getElementById('checkout-contact');
+    const contact = document.getElementById('checkout-contact').value.trim();
     const errorEl = document.getElementById('checkout-contact-error');
-    const contact = contactInput.value.trim();
     const isSharedFamily = state.checkoutVariant?.accountType === 'Dùng chung';
 
     if (isSharedFamily && !CONTACT_REGEX.EMAIL.test(contact)) {
@@ -227,8 +188,7 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
     const btn = e.currentTarget;
     btn.disabled = true;
     try {
-      const completed = await confirmPaymentAndDeliver(state.pendingOrder.orderCode);
-      await handleOrderPaid(completed);
+      await handleOrderPaid(await confirmPaymentAndDeliver(state.pendingOrder.orderCode));
     } catch (err) {
       showToast(err.message || 'Lỗi xác nhận thanh toán.', 'error');
     } finally {
@@ -236,21 +196,7 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
     }
   });
 
-  document.getElementById('copy-all-credentials-btn')?.addEventListener('click', (e) => {
-    const text = document.getElementById('delivered-credentials')?.textContent || '';
-    if (text) copyText(text, 'danh sách tài khoản', e.currentTarget);
-  });
-
-  document.getElementById('download-credentials-btn')?.addEventListener('click', () => {
-    const code = document.getElementById('delivered-order-code')?.textContent || 'ACC';
-    const text = document.getElementById('delivered-credentials')?.textContent || '';
-    if (text) downloadTextFile(`${code}-accounts.txt`, text);
-  });
-
-  document.getElementById('delivered-prebuilt-guide')?.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action="open-prebuilt-guide"]');
-    if (btn) openPrebuiltGuideModal(btn.dataset.duration || '');
-  });
+  bindDeliveredActionEvents();
 }
 
 export async function handlePaymentReturnUrl({ switchView, refreshAccountData }) {
@@ -260,8 +206,7 @@ export async function handlePaymentReturnUrl({ switchView, refreshAccountData })
   if (!payment && !orderCode) return;
   window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
   if (payment === 'cancel') {
-    showToast(orderCode ? `Bạn đã hủy thanh toán đơn #${orderCode}.` : 'Bạn đã hủy thanh toán.', 'info');
-    return;
+    return showToast(orderCode ? `Bạn đã hủy thanh toán đơn #${orderCode}.` : 'Bạn đã hủy thanh toán.', 'info');
   }
   if (payment === 'success' && orderCode) {
     try {
@@ -269,13 +214,12 @@ export async function handlePaymentReturnUrl({ switchView, refreshAccountData })
       if ((order?.status === 'PAID' && order.credentials.length > 0) || order?.status === 'PENDING_MANUAL') {
         await refreshAccountData();
         const modal = document.getElementById('checkout-modal');
-        if (modal) {
-          modal.hidden = false;
-          document.body.style.overflow = 'hidden';
-        }
+        if (modal) { modal.hidden = false; document.body.style.overflow = 'hidden'; }
         renderDeliveredStep(order);
-        showToast(`Đơn #${orderCode} đã thanh toán thành công!`, 'success');
-        return;
+        if (order.status === 'PENDING_MANUAL') {
+          return showToast(`Đơn #${orderCode} đã thanh toán! Admin sẽ liên hệ qua Email/Zalo để cấp key.`, 'info');
+        }
+        return showToast(`Đơn #${orderCode} đã thanh toán thành công!`, 'success');
       }
     } catch {
       // Chờ webhook cập nhật

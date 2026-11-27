@@ -149,6 +149,20 @@ test('5. Bien the ton kho, Cap thu cong, Promo va Cheapest Variant', () => {
   assert.equal(mappers.isVariantManual(prod, '18 Tháng', 'Nâng cấp chính chủ'), true);
   assert.equal(mappers.isVariantManual(prod, '7 ngày', 'TK cấp sẵn'), false);
 
+  assert.equal(mappers.normalizeDurationLabel('7 ngày'), '7 Ngày');
+  assert.equal(mappers.normalizeDurationLabel('18 tháng'), '18 Tháng');
+  const hybridPrebuilt = {
+    id: 'hybrid-prebuilt',
+    name: 'Hybrid Prebuilt',
+    price: 50000,
+    isActive: true,
+    stock: 7,
+    variantStocks: { '1 Tháng|TK cấp sẵn': 3 },
+    manualStocks: { '1 Tháng|TK cấp sẵn': 4 },
+  };
+  assert.equal(mappers.isVariantManual(hybridPrebuilt, '1 Tháng', 'TK cấp sẵn'), false);
+  assert.equal(mappers.getVariantStock(hybridPrebuilt, '1 Tháng', 'TK cấp sẵn'), 3);
+
   const durations = uiStore.getProductDurations(prod).map((d) => d.label);
   assert.equal(durations.includes('7 Ngày'), true);
   assert.equal(durations.includes('18 Tháng'), true);

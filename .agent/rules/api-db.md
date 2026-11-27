@@ -8,3 +8,5 @@
    - `isAdminLoggedIn()` phải trả về `false` ở chế độ Demo Local và với tài khoản khách thường.
 5. **`localStorage` an toàn:** Bọc `try/catch` qua `safeStorageGet`/`safeStorageSet` kèm `schemaVersion: 1`.
 6. **Đồng bộ Schema SQL:** Mọi thay đổi cấu trúc database (SQL) bắt buộc phải cập nhật đồng bộ ngay vào `supabase/schema_backup.sql`.
+7. **Chuẩn hóa khóa biến thể (`${duration}|${accountType}`):** Mọi chuỗi `duration` tự do từ Admin trước khi lưu vào `inventory_keys`, `variant_prices`, `manual_stocks` hoặc `promo_codes` phải qua `.replace(/\|/g, '-').trim()` để không làm vỡ ký tự phân tách `|`.
+8. **Tên miền chính thức (`ai2hand.id.vn`):** Đồng bộ `https://ai2hand.id.vn` trên `CNAME`, `robots.txt`, `sitemap.xml`, `index.html` (`og:url`), `supabase/functions/_shared/cors.ts` (`DEFAULT_ORIGINS`) và `create-order/index.ts` (`PAYOS_RETURN_URL`/`PAYOS_CANCEL_URL`).

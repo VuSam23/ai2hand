@@ -6,7 +6,7 @@ import { stopOrderPolling, getVariantStock, getVariantPrice, isVariantManual, no
 import { readSession } from '../services/authRefresh.js';
 import { calculatePromoDiscount } from '../services/promoApi.js';
 import { formatVnd, escapeHtml, showToast } from './uiCommon.js';
-import { isPrebuiltAccountOrder, renderPrebuiltAccountGuideHtml } from './uiPrebuiltGuide.js';
+import { applyDeliveredMaskState } from './uiPrebuiltGuide.js';
 
 let qrTimerInterval = null;
 
@@ -55,17 +55,9 @@ export function syncCheckoutVariantUi(state, variantObj) {
   if (!state.checkoutProduct || !variantObj) return;
   state.checkoutVariant = variantObj;
   const availStock = Number(variantObj.stock) || 0;
-  document.getElementById('checkout-product-name').textContent =
-    `${state.checkoutProduct.name} • ${variantObj.label} (${variantObj.accountType})`;
-  const stockEl = document.getElementById('checkout-product-stock');
-  stockEl.textContent =
-    availStock === 0
-      ? 'Hết hàng'
-      : variantObj.isManual
-        ? `Còn lại: ${availStock} suất (Cấp thủ công)`
-        : `Còn lại: ${availStock} tài khoản`;
-  document.getElementById('checkout-unit-price').textContent =
-    variantObj.price >= 1000 ? formatVnd(variantObj.price) : 'Chưa đặt giá';
+  document.getElementById('checkout-product-name').textContent = `${state.checkoutProduct.name} • ${variantObj.label} (${variantObj.accountType})`;
+  document.getElementById('checkout-product-stock').textContent = availStock === 0 ? 'Hết hàng' : variantObj.isManual ? `Còn lại: ${availStock} suất (Cấp thủ công)` : `Còn lại: ${availStock} tài khoản`;
+  document.getElementById('checkout-unit-price').textContent = variantObj.price >= 1000 ? formatVnd(variantObj.price) : 'Chưa đặt giá';
 
   const deliveryNote = document.getElementById('checkout-delivery-note');
   const contactLabel = document.getElementById('checkout-contact-label-text');
@@ -74,16 +66,10 @@ export function syncCheckoutVariantUi(state, variantObj) {
   const isUpgradeOwner = !isSharedFamily && (variantObj.isManual || variantObj.accountType === 'Nâng cấp chính chủ');
   const showPrebuiltNote = !isSharedFamily && !isUpgradeOwner && variantObj.accountType === 'TK cấp sẵn';
   if (contactLabel) {
-    contactLabel.textContent = isSharedFamily
-      ? 'Nhập địa chỉ Gmail cần thêm vào nhóm Family'
-      : isUpgradeOwner
-        ? 'Email tài khoản cần nâng cấp hoặc SĐT Zalo'
-        : 'Email hoặc SĐT Zalo nhận hàng';
+    contactLabel.textContent = isSharedFamily ? 'Nhập địa chỉ Gmail cần thêm vào nhóm Family' : isUpgradeOwner ? 'Email tài khoản cần nâng cấp hoặc SĐT Zalo' : 'Email hoặc SĐT Zalo nhận hàng';
   }
   if (contactInput) {
-    contactInput.placeholder = isSharedFamily
-      ? 'Ví dụ: ten_cua_ban@gmail.com (Bắt buộc nhập đúng Gmail)'
-      : 'Ví dụ: khachhang@gmail.com hoặc 0912345678';
+    contactInput.placeholder = isSharedFamily ? 'Ví dụ: ten_cua_ban@gmail.com (Bắt buộc nhập đúng Gmail)' : 'Ví dụ: khachhang@gmail.com hoặc 0912345678';
   }
   if (deliveryNote) {
     deliveryNote.hidden = !isSharedFamily && !isUpgradeOwner && !showPrebuiltNote;
@@ -106,13 +92,11 @@ export function syncCheckoutVariantUi(state, variantObj) {
 
 export function calculateCheckoutTotal(state) {
   if (!state.checkoutProduct) return 0;
-  const qtyInput = document.getElementById('checkout-qty');
-  const qty = Math.max(1, Number.parseInt(qtyInput?.value, 10) || 1);
+  const qty = Math.max(1, Number.parseInt(document.getElementById('checkout-qty')?.value, 10) || 1);
   const unitPrice = state.checkoutVariant?.price || state.checkoutProduct.price;
   if (unitPrice < 1000) return 0;
   const subTotal = unitPrice * qty;
-  const discount = calculatePromoDiscount(state.activeVoucher, subTotal);
-  return Math.max(1000, subTotal - discount);
+  return Math.max(1000, subTotal - calculatePromoDiscount(state.activeVoucher, subTotal));
 }
 
 export function updateCheckoutPriceUi(state) {
@@ -126,7 +110,6 @@ export function switchModalStep(step) {
   document.getElementById('checkout-form').hidden = step !== 'form';
   document.getElementById('checkout-qr-step').hidden = step !== 'qr';
   document.getElementById('checkout-success-step').hidden = step !== 'success';
-
   if (step === 'form') {
     stepLabel.textContent = 'Bước 1/2 • Thông tin nhận hàng';
     title.textContent = 'Xác nhận đơn hàng';
@@ -142,26 +125,15 @@ export function switchModalStep(step) {
 export function openCheckoutModal(state, product, variantOverride = null) {
   const modal = document.getElementById('checkout-modal');
   if (!modal || !product) return;
-
   stopOrderPolling();
   state.checkoutProduct = product;
   state.pendingOrder = null;
   state.activeVoucher = null;
 
   const variants = buildCheckoutVariants(product);
-  if (variants.length === 0) {
-    showToast('Sản phẩm hiện đã hết hàng.', 'error');
-    return;
-  }
+  if (variants.length === 0) return showToast('Sản phẩm hiện đã hết hàng.', 'error');
   state.checkoutVariants = variants;
-  const matched =
-    (variantOverride &&
-      variants.find(
-        (v) =>
-          v.label === variantOverride.label &&
-          (!variantOverride.accountType || v.accountType === variantOverride.accountType)
-      )) ||
-    variants[0];
+  const matched = (variantOverride && variants.find((v) => v.label === variantOverride.label && (!variantOverride.accountType || v.accountType === variantOverride.accountType))) || variants[0];
 
   const varWrap = document.getElementById('checkout-variant-wrap');
   const durSelect = document.getElementById('checkout-duration-select');
@@ -172,14 +144,7 @@ export function openCheckoutModal(state, product, variantOverride = null) {
     durSelect.value = durations.includes(matched.label) ? matched.label : durations[0];
   }
   syncCheckoutAccountTypeOptions(state, durSelect?.value || matched.label, matched.accountType);
-  syncCheckoutVariantUi(
-    state,
-    resolveCheckoutVariant(
-      product,
-      durSelect?.value || matched.label,
-      document.getElementById('checkout-account-type-select')?.value || matched.accountType
-    )
-  );
+  syncCheckoutVariantUi(state, resolveCheckoutVariant(product, durSelect?.value || matched.label, document.getElementById('checkout-account-type-select')?.value || matched.accountType));
 
   const voucherInput = document.getElementById('checkout-voucher-input');
   const discountNote = document.getElementById('checkout-discount-note');
@@ -189,18 +154,13 @@ export function openCheckoutModal(state, product, variantOverride = null) {
     discountNote.textContent = '';
     discountNote.classList.remove('is-error');
   }
-
   updateCheckoutPriceUi(state);
 
   const contactInput = document.getElementById('checkout-contact');
   const prefillEmail = readSession()?.email || state.userProfile?.email || '';
   if (contactInput && !contactInput.value.trim() && prefillEmail) contactInput.value = prefillEmail;
-
   const errorEl = document.getElementById('checkout-contact-error');
-  if (errorEl) {
-    errorEl.hidden = true;
-    errorEl.textContent = '';
-  }
+  if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
 
   switchModalStep('form');
   modal.hidden = false;
@@ -209,10 +169,7 @@ export function openCheckoutModal(state, product, variantOverride = null) {
 
 export function closeCheckoutModal() {
   stopOrderPolling();
-  if (qrTimerInterval) {
-    clearInterval(qrTimerInterval);
-    qrTimerInterval = null;
-  }
+  if (qrTimerInterval) { clearInterval(qrTimerInterval); qrTimerInterval = null; }
   const modal = document.getElementById('checkout-modal');
   if (!modal || modal.hidden) return;
   modal.hidden = true;
@@ -250,49 +207,25 @@ export function renderVietQrStep(order) {
   const qrImg = document.getElementById('vietqr-img');
   const fallbackMsg = document.getElementById('vietqr-fallback-msg');
   if (fallbackMsg) fallbackMsg.hidden = true;
-  if (qrImg) {
-    qrImg.hidden = false;
-    qrImg.src = order.qrUrl;
-  }
-
+  if (qrImg) { qrImg.hidden = false; qrImg.src = order.qrUrl; }
   document.getElementById('qr-bank-name').textContent = order.bankAccountName || VIETQR_CONFIG.BANK_NAME;
   document.getElementById('qr-account-no').textContent = order.bankAccountNo || VIETQR_CONFIG.ACCOUNT_NO;
   document.getElementById('qr-amount').textContent = formatVnd(order.totalAmount);
   document.getElementById('copy-amount-btn').dataset.copyValue = String(order.totalAmount);
   document.getElementById('qr-add-info').textContent = order.transferContent || order.orderCode;
   const payosLink = document.getElementById('payos-checkout-link');
-  if (payosLink) {
-    payosLink.href = order.checkoutUrl || '#';
-    payosLink.hidden = !order.checkoutUrl;
-  }
+  if (payosLink) { payosLink.href = order.checkoutUrl || '#'; payosLink.hidden = !order.checkoutUrl; }
   switchModalStep('qr');
   startQrCountdown(900);
 }
 
 export function renderDeliveredStep(order) {
   stopOrderPolling();
-  if (qrTimerInterval) {
-    clearInterval(qrTimerInterval);
-    qrTimerInterval = null;
-  }
+  if (qrTimerInterval) { clearInterval(qrTimerInterval); qrTimerInterval = null; }
   const isManualPending = String(order.status || '').toUpperCase() === 'PENDING_MANUAL';
   const boxTitle = document.getElementById('delivered-box-title');
   if (boxTitle) boxTitle.innerHTML = isManualPending ? 'Trạng thái đơn hàng (Chờ cấp thủ công)' : 'Thông tin tài khoản / Key (<code>user|pass</code>)';
   document.getElementById('delivered-order-code').textContent = order.orderCode;
-  document.getElementById('delivered-credentials').textContent = isManualPending
-    ? `Đã thanh toán thành công! Vui lòng liên hệ Admin qua Zalo (0373786203) hoặc Telegram (@Acc2Hand) kèm mã đơn #${order.orderCode} để được hỗ trợ kích hoạt nhanh nhất.`
-    : (order.credentials || []).join('\n');
-  const copyBtn = document.getElementById('copy-all-credentials-btn');
-  const dlBtn = document.getElementById('download-credentials-btn');
-  const contactBox = document.getElementById('delivered-manual-contact');
-  const guideBox = document.getElementById('delivered-prebuilt-guide');
-  if (copyBtn) copyBtn.hidden = isManualPending;
-  if (dlBtn) dlBtn.hidden = isManualPending;
-  if (contactBox) contactBox.hidden = !isManualPending;
-  if (guideBox) {
-    const showGuide = isPrebuiltAccountOrder(order);
-    guideBox.hidden = !showGuide;
-    guideBox.innerHTML = showGuide ? renderPrebuiltAccountGuideHtml({ compact: false, durationLabel: order.duration || '' }) : '';
-  }
+  applyDeliveredMaskState(order);
   switchModalStep('success');
 }

@@ -1,55 +1,59 @@
 /**
- * js/services/adminManualApi.js — Tầng 2: Cấu hình cấp thủ công & hoàn tất đơn thủ công qua admin-api
+ * js/services/adminManualApi.js — Tầng 2: Cấu hình cấp thủ công, đơn hàng, voucher & key lẻ qua admin-api
  */
-import { SUPABASE_CONFIG, isSupabaseConfigured } from '../config/config.js';
-import { readSession } from './authRefresh.js';
+import { callAdminFunction, isAdminLoggedIn } from './adminApi.js';
 
-async function callManualAdmin(action, payload) {
-  if (!isSupabaseConfigured()) throw new Error('Tính năng này chỉ hỗ trợ khi kết nối Supabase.');
-  const session = readSession();
-  if (!session?.accessToken) throw new Error('Phiên Admin đã hết hạn.');
-  const fnUrl = `${SUPABASE_CONFIG.restUrl.replace(/\/rest\/v1\/?$/, '')}/functions/v1/admin-api`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
-  try {
-    const res = await fetch(fnUrl, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        apikey: SUPABASE_CONFIG.publishableKey.trim(),
-        Authorization: `Bearer ${session.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ action, payload }),
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok || !body?.ok) throw new Error(body?.error || 'Thao tác Admin thất bại.');
-    return body.data;
-  } finally {
-    clearTimeout(timer);
-  }
+export async function adminUpdateManualStock(productId, variantKey, manualStock, price = 0) {
+  const res = await callAdminFunction('update_manual_stock', { productId, variantKey, manualStock, price });
+  return res.data;
 }
 
-export function adminUpdateManualStock(productId, variantKey, manualStock, price = 0) {
-  return callManualAdmin('update_manual_stock', { productId, variantKey, manualStock, price });
+export async function adminCompleteManualOrder(orderCode, credential) {
+  const res = await callAdminFunction('complete_manual_order', { orderCode, credential });
+  return res.data;
 }
 
-export function adminCompleteManualOrder(orderCode, credential) {
-  return callManualAdmin('complete_manual_order', { orderCode, credential });
+export async function adminUpdateWarranty(productId, warranty) {
+  const res = await callAdminFunction('update_warranty', { productId, warranty });
+  return res.data;
 }
 
-export function adminUpdateWarranty(productId, warranty) {
-  return callManualAdmin('update_warranty', { productId, warranty });
+export async function adminUpdateProduct(productId, payload) {
+  const res = await callAdminFunction('update_product', { productId, ...payload });
+  return res.data;
 }
 
-export function adminUpdateProduct(productId, payload) {
-  return callManualAdmin('update_product', { productId, ...payload });
+export async function adminListKeys(productId = '') {
+  const res = await callAdminFunction('list_keys', { productId });
+  return Array.isArray(res.data) ? res.data : [];
 }
 
-export function adminListKeys(productId = '') {
-  return callManualAdmin('list_keys', { productId });
+export async function adminDeleteKey(id) {
+  return callAdminFunction('delete_key', { id });
 }
 
-export function adminDeleteKey(id) {
-  return callManualAdmin('delete_key', { id });
+export async function adminListOrders() {
+  if (!isAdminLoggedIn()) return [];
+  const res = await callAdminFunction('list_orders');
+  return Array.isArray(res.data) ? res.data : [];
+}
+
+export async function adminListPromos() {
+  if (!isAdminLoggedIn()) return [];
+  const res = await callAdminFunction('list_promos');
+  return Array.isArray(res.data) ? res.data : [];
+}
+
+export async function adminUpsertPromo(payload) {
+  const res = await callAdminFunction('upsert_promo', payload);
+  return res.data;
+}
+
+export async function adminTogglePromo(id, isActive) {
+  const res = await callAdminFunction('toggle_promo', { id, is_active: Boolean(isActive) });
+  return res.data;
+}
+
+export async function adminDeletePromo(id) {
+  return callAdminFunction('delete_promo', { id });
 }

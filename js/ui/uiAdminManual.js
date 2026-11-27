@@ -1,8 +1,9 @@
 /**
  * js/ui/uiAdminManual.js — Thao tác cấu hình thủ công, sửa sản phẩm & quản lý key lẻ
  */
-import { CATEGORIES, DURATION_VARIANTS, ACCOUNT_TYPES } from '../config/config.js';
+import { CATEGORIES, ACCOUNT_TYPES } from '../config/config.js';
 import { fetchProducts } from '../services/supabaseApi.js';
+import { normalizeDurationLabel } from '../services/supabaseMappers.js';
 import { adminUpdateStock, adminUpdatePrice, adminUpdateVariantPrice, adminDeleteProduct, adminListOrders } from '../services/adminApi.js';
 import {
   adminUpdateManualStock,
@@ -13,6 +14,7 @@ import {
   adminDeleteKey,
 } from '../services/adminManualApi.js';
 import { renderAdminOrders, renderAdminKeysList } from './uiAdminRender.js';
+import { renderAdminStats } from './uiAdminStats.js';
 import { openFormDialog, openConfirmDialog } from './uiDialog.js';
 import { showToast } from './uiCommon.js';
 
@@ -48,7 +50,7 @@ export async function handleAddManualVariant(btn, state, refreshCatalogUi) {
   if (!vals) return;
   const price = Math.round(Number(vals.price) || 0);
   if (price < 1000) return showToast('Giá bán phải từ 1.000đ trở lên.', 'error');
-  const cleanDur = String(vals.duration || '1 Tháng').replace(/\|/g, '-').trim() || '1 Tháng';
+  const cleanDur = normalizeDurationLabel(vals.duration || '1 Tháng');
   const vKey = `${cleanDur}|${vals.accountType}`;
   const qty = Math.max(0, Number.parseInt(vals.qty, 10) || 0);
   try {
@@ -61,7 +63,7 @@ export async function handleAddManualVariant(btn, state, refreshCatalogUi) {
   }
 }
 
-export async function handleCompleteManualOrder(btn) {
+export async function handleCompleteManualOrder(btn, state = null) {
   const orderCode = btn.dataset.orderCode || '';
   if (!orderCode) return;
   const vals = await openFormDialog({
@@ -73,7 +75,9 @@ export async function handleCompleteManualOrder(btn) {
   btn.disabled = true;
   try {
     await adminCompleteManualOrder(orderCode, vals.credential.trim());
-    renderAdminOrders(await adminListOrders());
+    const orders = await adminListOrders();
+    renderAdminOrders(orders);
+    if (state?.products) renderAdminStats(state.products, orders);
     showToast(`Đã hoàn tất & bàn giao đơn #${orderCode}!`, 'success');
   } catch (err) {
     showToast(err.message || 'Không thể hoàn tất đơn thủ công.', 'error');

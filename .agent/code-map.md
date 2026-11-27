@@ -22,9 +22,9 @@
   - `js/services/trafficSource.js`: Theo dõi nguồn truy cập First-touch (UTM / Referrer).
 - **Tầng 3 (`ui/`):**
   - `js/ui/uiCommon.js`: `formatVnd`, `escapeHtml`, `showToast`, `copyText`, `downloadTextFile`.
-  - `js/ui/uiStore.js`: Render danh mục, lưới thẻ `#product-grid`, chi tiết `#view-product-detail`.
+  - `js/ui/uiStoreVariants.js` & `js/ui/uiStore.js`: Tính toán biến thể/giá/media (`getProductDurations`, `getCheapestVariant`), render danh mục, lưới thẻ `#product-grid`, chi tiết `#view-product-detail`.
   - `js/ui/uiCheckoutSteps.js` & `js/ui/uiCheckout.js`: Modal VietQR 3 bước, Voucher, đếm ngược `00:00`.
-  - `js/ui/uiAccount.js` & `js/ui/handlersAccount.js`: Render & sự kiện Account, Auth.
+  - `js/ui/uiAccount.js`, `js/ui/handlersAccount.js` & `js/ui/handlersAuth.js`: Render & sự kiện Account, Đăng nhập/Đăng ký/Khôi phục mật khẩu Auth.
   - `js/ui/uiAdminStats.js` & `js/ui/uiAdminRender.js` (`switchAdminTab`, `renderAdminView`) & `js/ui/uiAdmin.js`: Thống kê, Render, chuyển Tab & sự kiện trang Quản trị Admin Kho (`#view-admin`).
 - **Tầng 4 (`app.js`):** `js/app.js` (`initApp`, `switchView` + Auth Guard, Event Delegation).
 - **Edge Functions:** `supabase/functions/_shared/payos.ts`, `supabase/functions/create-order/index.ts`, `supabase/functions/payment-webhook/index.ts`, `supabase/functions/admin-api/index.ts`.

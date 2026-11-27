@@ -13,6 +13,15 @@ import {
   isTokenExpiringSoon,
   refreshAccessToken,
 } from './authRefresh.js';
+import {
+  adminListOrders,
+  adminListPromos,
+  adminUpsertPromo,
+  adminTogglePromo,
+  adminDeletePromo,
+} from './adminManualApi.js';
+
+export { adminListOrders, adminListPromos, adminUpsertPromo, adminTogglePromo, adminDeletePromo };
 
 function getSupabaseOrigin() {
   return SUPABASE_CONFIG.restUrl.replace(/\/rest\/v1\/?$/, '');
@@ -20,9 +29,7 @@ function getSupabaseOrigin() {
 
 function checkIsAdminUser(user, fallbackEmail = '') {
   const email = String(user?.email || fallbackEmail).trim().toLowerCase();
-  const role = String(
-    user?.app_metadata?.role || user?.user_metadata?.role || ''
-  ).toLowerCase();
+  const role = String(user?.app_metadata?.role || user?.user_metadata?.role || '').toLowerCase();
   if (role === 'admin') return true;
   const allowedList = (SUPABASE_CONFIG.adminEmails || []).map((e) => e.toLowerCase());
   return Boolean(email && allowedList.includes(email));
@@ -77,9 +84,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
 }
 
 export async function adminLogin(email, password) {
-  if (!isSupabaseConfigured()) {
-    throw new Error('Chưa cấu hình Supabase Publishable Key.');
-  }
+  if (!isSupabaseConfigured()) throw new Error('Chưa cấu hình Supabase Publishable Key.');
   const key = SUPABASE_CONFIG.publishableKey.trim();
   const res = await fetchWithTimeout(`${getSupabaseOrigin()}/auth/v1/token?grant_type=password`, {
     method: 'POST',
@@ -87,18 +92,14 @@ export async function adminLogin(email, password) {
     body: JSON.stringify({ email: String(email).trim().toLowerCase(), password }),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.access_token) {
-    throw new Error('Email hoặc mật khẩu không chính xác.');
-  }
+  if (!res.ok || !data.access_token) throw new Error('Email hoặc mật khẩu không chính xác.');
   return buildAuthSession(data, email);
 }
 
 function buildAuthSession(data, email) {
   const userEmail = String(data.user?.email || email).trim().toLowerCase();
   const displayName =
-    data.user?.user_metadata?.full_name ||
-    data.user?.user_metadata?.name ||
-    userEmail.split('@')[0];
+    data.user?.user_metadata?.full_name || data.user?.user_metadata?.name || userEmail.split('@')[0];
   return saveSession({
     userId: data.user?.id || null,
     accessToken: data.access_token,
@@ -138,9 +139,7 @@ export async function userResetPassword(email) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cleanEmail)) {
     throw new Error('Vui lòng nhập email hợp lệ để đặt lại mật khẩu.');
   }
-  if (isSupabaseConfigured()) {
-    await authPost('recover', { email: cleanEmail }).catch(() => null);
-  }
+  if (isSupabaseConfigured()) await authPost('recover', { email: cleanEmail }).catch(() => null);
   return 'Nếu email tồn tại trong hệ thống, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.';
 }
 
@@ -181,7 +180,7 @@ async function refreshOrExpire() {
   }
 }
 
-async function callAdminFunction(action, payload = {}) {
+export async function callAdminFunction(action, payload = {}) {
   let session = getAdminSession();
   if (!isAdminLoggedIn() || !session?.accessToken) {
     throw new Error('Chỉ tài khoản Admin mới có quyền thực hiện thao tác này.');
@@ -200,34 +199,19 @@ async function callAdminFunction(action, payload = {}) {
   if (res.status === 403) {
     throw new Error(`Tài khoản ${body.email || session.email} không có quyền Admin trên máy chủ.`);
   }
-  if (!res.ok || body.ok === false) {
-    throw new Error(body.error || `Admin API Error (${res.status})`);
-  }
+  if (!res.ok || body.ok === false) throw new Error(body.error || `Admin API Error (${res.status})`);
   return body;
 }
 
 export async function adminAddProduct(payload) {
-  if (!isAdminLoggedIn()) throw new Error('Cần quyền Admin để thêm sản phẩm.');
-  const res = await callAdminFunction('add_product', payload);
-  return res.data;
+  return (await callAdminFunction('add_product', payload)).data;
 }
 
 export async function adminUpdateStock(productId, isActive) {
-  if (!isAdminLoggedIn()) throw new Error('Cần quyền Admin để cập nhật trạng thái gói.');
-  const res = await callAdminFunction('update_stock', {
-    productId,
-    is_active: Boolean(isActive),
-  });
-  return res.data;
+  return (await callAdminFunction('update_stock', { productId, is_active: Boolean(isActive) })).data;
 }
 
-export async function adminImportCredentials(
-  productId,
-  rawText,
-  duration = '1 Tháng',
-  accountType = 'TK cấp sẵn'
-) {
-  if (!isAdminLoggedIn()) throw new Error('Cần quyền Admin để nạp kho.');
+export async function adminImportCredentials(productId, rawText, duration = '1 Tháng', accountType = 'TK cấp sẵn') {
   const cleanId = String(productId || '').trim();
   if (!cleanId) throw new Error('Vui lòng chọn gói sản phẩm hợp lệ.');
   const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
@@ -238,61 +222,19 @@ export async function adminImportCredentials(
     accountType: String(accountType || 'TK cấp sẵn').trim(),
     lines,
   });
-  return {
-    importedCount: res.importedCount,
-    duplicateCount: res.duplicateCount || 0,
-    updatedStock: res.updatedStock,
-  };
+  return { importedCount: res.importedCount, duplicateCount: res.duplicateCount || 0, updatedStock: res.updatedStock };
 }
 
 export async function adminUpdatePrice(productId, price) {
-  if (!isAdminLoggedIn()) throw new Error('Cần quyền Admin để cập nhật giá.');
-  const res = await callAdminFunction('update_price', { productId, price: Number(price) });
-  return res.data;
+  return (await callAdminFunction('update_price', { productId, price: Number(price) })).data;
 }
 
 export async function adminUpdateVariantPrice(productId, variantKey, price) {
-  if (!isAdminLoggedIn()) throw new Error('Cần quyền Admin để cập nhật giá biến thể.');
-  const res = await callAdminFunction('update_variant_price', {
-    productId,
-    variantKey,
-    price: Number(price),
-  });
-  return res.data;
+  return (await callAdminFunction('update_variant_price', { productId, variantKey, price: Number(price) })).data;
 }
 
 export async function adminDeleteProduct(productId) {
-  if (!isAdminLoggedIn()) throw new Error('Cần quyền Admin để xóa gói.');
   return callAdminFunction('delete_product', { productId });
-}
-
-export async function adminListOrders() {
-  if (!isAdminLoggedIn()) return [];
-  const res = await callAdminFunction('list_orders');
-  return Array.isArray(res.data) ? res.data : [];
-}
-
-export async function adminListPromos() {
-  if (!isAdminLoggedIn()) return [];
-  const res = await callAdminFunction('list_promos');
-  return Array.isArray(res.data) ? res.data : [];
-}
-
-export async function adminUpsertPromo(payload) {
-  if (!isAdminLoggedIn()) throw new Error('Cần quyền Admin để lưu mã giảm giá.');
-  const res = await callAdminFunction('upsert_promo', payload);
-  return res.data;
-}
-
-export async function adminTogglePromo(id, isActive) {
-  if (!isAdminLoggedIn()) throw new Error('Cần quyền Admin để cập nhật mã giảm giá.');
-  const res = await callAdminFunction('toggle_promo', { id, is_active: Boolean(isActive) });
-  return res.data;
-}
-
-export async function adminDeletePromo(id) {
-  if (!isAdminLoggedIn()) throw new Error('Cần quyền Admin để xóa mã giảm giá.');
-  return callAdminFunction('delete_promo', { id });
 }
 
 export const resetDemoData = mockApi.resetDemoData;

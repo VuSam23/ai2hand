@@ -13,9 +13,10 @@ description: Quy trình sửa lỗi xuyên suốt các tầng (Root-Cause Fix & 
 3. **Kiểm thử bắt buộc & Deploy:**
    - Chạy lệnh xác minh giới hạn RAM:
    ```bash
-   node --max-old-space-size=512 scripts/verify.mjs && node --max-old-space-size=512 scripts/test-core.mjs
+   node --max-old-space-size=512 scripts/verify.mjs; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; node --max-old-space-size=512 scripts/test-core.mjs
    ```
-   - Nếu có chỉnh sửa Edge Function trong `supabase/functions/`, đính kèm lệnh deploy tương ứng:
+   - Nếu có chỉnh sửa Secrets hoặc Edge Function trong `supabase/functions/` (sau khi người dùng xác nhận thao tác production), dùng cờ `--yes` để tránh lỗi `HostedMutationConsentRequiredError` trong Agent Mode:
    ```bash
-   npx supabase functions deploy <tên_function> --no-verify-jwt
+   npx supabase secrets set KEY="VAL" --project-ref sfzsidgkqrilripijvft --yes
+   npx supabase functions deploy <tên_function> --project-ref sfzsidgkqrilripijvft --yes
    ```
