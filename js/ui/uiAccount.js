@@ -3,6 +3,7 @@
  */
 import { getAdminSession, isAdminLoggedIn, isUserLoggedIn } from '../services/adminApi.js';
 import { formatVnd, escapeHtml, formatDateTime, getInitials } from './uiCommon.js';
+import { isPrebuiltAccountOrder, renderPrebuiltAccountGuideHtml } from './uiPrebuiltGuide.js';
 
 export function syncAuthNavUi() {
   const isAdmin = isAdminLoggedIn();
@@ -116,6 +117,10 @@ export function renderAccountView(profile, orders = [], defaultTab = 'overview')
       const statusBadge = isManual
         ? '<span class="acc-status-badge">Đang chờ cấp key</span>'
         : '<span class="acc-status-badge"><span class="pulse-dot" aria-hidden="true"></span>Đã bàn giao</span>';
+      const showPrebuiltGuide = isPrebuiltAccountOrder(order);
+      const guideHtml = showPrebuiltGuide
+        ? renderPrebuiltAccountGuideHtml({ compact: true, durationLabel: order.duration || '' })
+        : '';
       const credCell = isManual
         ? `<div class="acc-order-sub">Đã nhận tiền • Liên hệ <a href="https://zalo.me/0373786203" target="_blank" rel="noopener noreferrer">Zalo 0373786203</a> / <a href="https://t.me/Acc2Hand" target="_blank" rel="noopener noreferrer">Telegram @Acc2Hand</a> kèm mã <strong>#${escapeHtml(order.orderCode)}</strong> để kích hoạt ngay.</div>`
         : `<div class="acc-cred-pill">
@@ -124,7 +129,7 @@ export function renderAccountView(profile, orders = [], defaultTab = 'overview')
                 <svg class="icon" aria-hidden="true"><use href="#icon-copy" /></svg>
                 <span>Copy</span>
               </button>
-            </div>`;
+            </div>${guideHtml}`;
       return `
         <tr>
           <td data-label="Mã đơn & Ngày">

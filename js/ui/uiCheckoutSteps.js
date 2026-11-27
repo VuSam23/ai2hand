@@ -6,6 +6,7 @@ import { stopOrderPolling, getVariantStock, isVariantManual } from '../services/
 import { readSession } from '../services/authRefresh.js';
 import { calculatePromoDiscount } from '../services/promoApi.js';
 import { formatVnd, escapeHtml, showToast } from './uiCommon.js';
+import { isPrebuiltAccountOrder, renderPrebuiltAccountGuideHtml } from './uiPrebuiltGuide.js';
 
 let qrTimerInterval = null;
 
@@ -19,20 +20,12 @@ export function resolveCheckoutVariant(product, label = '1 Tháng', accountType 
 }
 
 function buildCheckoutVariants(product) {
-  const allKeys = [
-    ...new Set([
-      ...Object.keys(product?.variantPrices || {}),
-      ...Object.keys(product?.variantStocks || {}),
-      ...Object.keys(product?.manualStocks || {}),
-    ]),
-  ];
-  const keys =
-    allKeys.length > 0 ? allKeys : [`${product?.duration || '1 Tháng'}|${ACCOUNT_TYPES[0].label}`];
-  const entries = keys.map((key) => {
+  const allKeys = [...new Set([...Object.keys(product?.variantPrices || {}), ...Object.keys(product?.variantStocks || {}), ...Object.keys(product?.manualStocks || {})])];
+  const keys = allKeys.length > 0 ? allKeys : [`${product?.duration || '1 Tháng'}|${ACCOUNT_TYPES[0].label}`];
+  return keys.map((key) => {
     const [label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label] = key.split('|');
     return resolveCheckoutVariant(product, label, accountType);
-  });
-  return entries.filter((v) => v.stock > 0);
+  }).filter((v) => v.stock > 0);
 }
 
 export function syncCheckoutAccountTypeOptions(state, duration, preferredType = '') {
@@ -285,8 +278,14 @@ export function renderDeliveredStep(order) {
   const copyBtn = document.getElementById('copy-all-credentials-btn');
   const dlBtn = document.getElementById('download-credentials-btn');
   const contactBox = document.getElementById('delivered-manual-contact');
+  const guideBox = document.getElementById('delivered-prebuilt-guide');
   if (copyBtn) copyBtn.hidden = isManualPending;
   if (dlBtn) dlBtn.hidden = isManualPending;
   if (contactBox) contactBox.hidden = !isManualPending;
+  if (guideBox) {
+    const showGuide = isPrebuiltAccountOrder(order);
+    guideBox.hidden = !showGuide;
+    guideBox.innerHTML = showGuide ? renderPrebuiltAccountGuideHtml({ compact: false, durationLabel: order.duration || '' }) : '';
+  }
   switchModalStep('success');
 }

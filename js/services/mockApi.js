@@ -95,6 +95,8 @@ export async function createOrder({
     orderCode,
     productId: product.id,
     productName: `${product.name}${durationPart}${typePart}`,
+    duration: String(customDuration || product.duration || '1 Tháng').trim(),
+    accountType: String(accountType || 'TK cấp sẵn').trim(),
     quantity,
     unitPrice,
     discountAmount,

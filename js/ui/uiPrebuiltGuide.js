@@ -1,0 +1,96 @@
+/**
+ * js/ui/uiPrebuiltGuide.js — Tầng 3: Hướng dẫn đăng nhập 2FA & Chính sách bảo hành cho Tài khoản cấp sẵn
+ */
+import { PREBUILT_2FA_VIDEO_URL } from '../config/config.js';
+import { escapeHtml } from './uiCommon.js';
+
+export function isPrebuiltAccountOrder(order) {
+  if (!order) return false;
+  const st = String(order.status || '').toUpperCase();
+  if (st === 'PENDING_MANUAL' || st === 'PENDING') return false;
+  const rawType = `${order.accountType || ''} ${order.account_type || ''} ${order.productName || ''} ${order.product_name || ''}`.toLowerCase();
+  if (rawType.includes('chính chủ')) return false;
+  if (rawType.includes('cấp sẵn') || rawType.includes('cap san')) return true;
+  // Nếu đơn cũ chưa ghi hậu tố loại tài khoản nhưng đã giao credential tự động và không phải nâng cấp chính chủ
+  return !order.accountType && !order.account_type && !rawType.includes('dùng chung') && Array.isArray(order.credentials) && order.credentials.length > 0;
+}
+
+export function renderPrebuiltAccountGuideHtml({ compact = false, durationLabel = '' } = {}) {
+  const videoUrl = String(PREBUILT_2FA_VIDEO_URL || '').trim();
+  const hasVideo = /^https:\/\/(www\.)?(youtube\.com\/embed\/|youtube-nocookie\.com\/embed\/)/i.test(videoUrl);
+  const warrantyScope = durationLabel
+    ? `07 ngày (hoặc trọn thời hạn gói ${escapeHtml(durationLabel)} ghi trên đơn hàng)`
+    : '07 ngày (hoặc theo thời hạn gói ghi trên đơn hàng)';
+
+  const videoBlock = hasVideo
+    ? `<div class="prebuilt-video-frame">
+         <iframe src="${escapeHtml(videoUrl)}" title="Video hướng dẫn thao tác mã 2FA tài khoản cấp sẵn" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+       </div>`
+    : `<div class="prebuilt-video-frame is-placeholder">
+         <div class="prebuilt-video-placeholder-inner">
+           <strong>🎬 Khung Video Hướng Dẫn Thao Tác Mã 2FA (16:9)</strong>
+           <span>Hướng dẫn dùng mã 2FA / mã dự phòng đăng nhập lần đầu &amp; làm mới 2FA riêng sau 2–7 ngày.</span>
+           <code>Cấu hình URL YouTube Embed tại: PREBUILT_2FA_VIDEO_URL (js/config/config.js)</code>
+         </div>
+       </div>`;
+
+  const innerContent = `
+    <div class="prebuilt-guide-grid">
+      <div class="prebuilt-section">
+        <h4>1️⃣ Đăng nhập lần đầu (Tránh khóa do lạ IP)</h4>
+        <ul class="prebuilt-list">
+          <li><strong>Tắt VPN / Proxy / 1.1.1.1</strong> trên thiết bị trước khi thao tác đăng nhập.</li>
+          <li>Ưu tiên đăng nhập trên <strong>điện thoại trước (qua app Gmail)</strong>, hoặc mở <strong>1 Hồ sơ Chrome mới (New Profile)</strong> sạch trên máy tính (không đăng nhập chung trình duyệt đang chứa nhiều Gmail khác).</li>
+          <li>Nhập <code>Email | Mật khẩu</code> → chọn nhập <strong>Mã 2FA / Mã dự phòng</strong> đi kèm để hoàn tất xác minh.</li>
+          <li class="prebuilt-highlight"><strong>⚠️ Điều kiện bảo hành bắt buộc:</strong> Quay video màn hình liền mạch từ lúc bắt đầu nhập tài khoản lần đầu tiên cho đến khi kiểm tra gói cước để được hỗ trợ <strong>1 đổi 1 ngay lập tức</strong> nếu phát sinh lỗi sai mật khẩu hoặc thiếu gói.</li>
+        </ul>
+      </div>
+
+      <div class="prebuilt-section">
+        <h4>2️⃣ Quy tắc sử dụng 7 – 10 ngày đầu</h4>
+        <ul class="prebuilt-list">
+          <li>Chỉ dùng cố định trên tối đa <strong>2 thiết bị cá nhân</strong> (1 điện thoại + 1 máy tính) với mạng Wi-Fi/4G ổn định; không chia sẻ tài khoản dùng chung nhiều người.</li>
+          <li><strong>Không đổi mật khẩu, email khôi phục hay 2FA trong 48 giờ đầu.</strong> Sau 2–7 ngày khi tài khoản đã quen thiết bị mới, có thể vào <code>myaccount.google.com/security</code> để đổi mật khẩu và tạo 2FA riêng.</li>
+        </ul>
+      </div>
+
+      <div class="prebuilt-section">
+        <h4>🎬 Video hướng dẫn thao tác mã 2FA (Tài khoản cấp sẵn)</h4>
+        ${videoBlock}
+      </div>
+
+      <div class="prebuilt-section is-warning">
+        <h4>3️⃣ Lưu ý cấm &amp; 🛡️ Chính sách bảo hành (Từ chối bảo hành nếu vi phạm)</h4>
+        <ul class="prebuilt-list">
+          <li><strong>Không đụng vào phần Thanh toán (<code>pay.google.com</code>):</strong> Tuyệt đối không xóa phương thức thanh toán, đóng hồ sơ hoặc đổi quốc gia để tránh mất gói Gemini.</li>
+          <li><strong>Không tự ý rời hoặc thêm người vào Google Family Group</strong> (nếu tài khoản thuộc gói share Family).</li>
+          <li><strong>Không cắm tool / API tự động:</strong> Chỉ sử dụng trực tiếp trên web hoặc app chính thức (<code>gemini.google.com</code>).</li>
+          <li>Không lưu trữ dữ liệu/tài liệu cá nhân quan trọng lên Google Drive của tài khoản này (shop không chịu trách nhiệm sao lưu dữ liệu).</li>
+          <li><strong>Phạm vi &amp; Hình thức bảo hành:</strong> Bảo hành đăng nhập lần đầu và lỗi gói cước trong vòng <strong>${warrantyScope}</strong> kể từ lúc bàn giao. Đổi tài khoản mới tương đương hoặc hoàn tiền theo thời gian chưa sử dụng; từ chối bảo hành nếu khóa do vi phạm các lưu ý trên.</li>
+        </ul>
+      </div>
+    </div>
+  `;
+
+  if (compact) {
+    return `
+      <details class="prebuilt-guide-card is-compact">
+        <summary class="prebuilt-guide-summary">
+          <span>🛡️ Hướng dẫn đăng nhập 2FA &amp; Chính sách bảo hành (Tài khoản cấp sẵn)</span>
+          <span class="prebuilt-guide-toggle-hint">Xem chi tiết ▾</span>
+        </summary>
+        ${innerContent}
+      </details>
+    `;
+  }
+
+  return `
+    <details class="prebuilt-guide-card" open>
+      <summary class="prebuilt-guide-summary">
+        <span>🛡️ Hướng dẫn đăng nhập &amp; Chính sách bảo hành (Tài khoản cấp sẵn)</span>
+        <span class="prebuilt-guide-toggle-hint">Thu gọn / Mở rộng ▾</span>
+      </summary>
+      ${innerContent}
+    </details>
+  `;
+}

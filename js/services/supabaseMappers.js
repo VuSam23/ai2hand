@@ -89,6 +89,8 @@ export function normalizeOrder(row) {
     payosOrderCode: row.payos_order_code || null,
     productId: row.product_id || row.productId,
     productName: baseName.includes('•') ? baseName : `${baseName}${durationPart}${typePart}`,
+    duration: String(row.duration || '').trim(),
+    accountType: String(row.account_type || row.accountType || '').trim(),
     quantity: qty,
     unitPrice: Number(row.unit_price ?? row.unitPrice) || Math.round(amount / qty),
     totalAmount: amount,

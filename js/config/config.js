@@ -60,6 +60,9 @@ export const ACCOUNT_TYPES = [
 
 export const VOUCHERS = {};
 
+// Thay URL embed YouTube hướng dẫn thao tác 2FA cho Tài khoản cấp sẵn tại đây (vd: 'https://www.youtube.com/embed/VIDEO_ID')
+export const PREBUILT_2FA_VIDEO_URL = '';
+
 export const STORAGE_KEYS = {
   ORDERS: 'digitrust_orders_v1',
   PRODUCTS: 'digitrust_products_v1',

@@ -23,6 +23,7 @@ const supabaseApi = await import('../js/services/supabaseApi.js');
 const mappers = await import('../js/services/supabaseMappers.js');
 const promoApi = await import('../js/services/promoApi.js');
 const uiStore = await import('../js/ui/uiStore.js');
+const prebuiltGuide = await import('../js/ui/uiPrebuiltGuide.js');
 
 test('1. RBAC: isAdminLoggedIn() chi true voi admin@gmail.com va false voi khach/demo', async () => {
   adminApi.adminLogout();
@@ -180,4 +181,33 @@ test('5. Bien the ton kho, Cap thu cong, Promo va Cheapest Variant', () => {
   });
   assert.equal(mappedFallback.imageUrl, 'https://example.com/canva-avatar.webp');
   assert.equal(mappedFallback.detailImageUrl, 'https://example.com/canva-avatar.webp');
+
+  const prebuiltPaid = mappers.normalizeOrder({
+    order_code: 'ACC12345',
+    product_name: 'Gemini Advanced',
+    duration: '1 Tháng',
+    account_type: 'TK cấp sẵn',
+    status: 'paid',
+    delivered_credential: 'user@gmail.com|Pass123|2FA_CODE',
+  });
+  assert.equal(prebuiltGuide.isPrebuiltAccountOrder(prebuiltPaid), true);
+
+  const upgradePaid = mappers.normalizeOrder({
+    order_code: 'ACC67890',
+    product_name: 'Gemini Advanced',
+    duration: '12 Tháng',
+    account_type: 'Nâng cấp chính chủ',
+    status: 'paid',
+    delivered_credential: 'Đã nâng cấp chính chủ',
+  });
+  assert.equal(prebuiltGuide.isPrebuiltAccountOrder(upgradePaid), false);
+
+  const manualPending = mappers.normalizeOrder({
+    order_code: 'ACC99999',
+    product_name: 'Gemini Advanced',
+    duration: '1 Tháng',
+    account_type: 'TK cấp sẵn',
+    status: 'pending_manual',
+  });
+  assert.equal(prebuiltGuide.isPrebuiltAccountOrder(manualPending), false);
 });
