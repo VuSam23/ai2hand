@@ -90,13 +90,16 @@ export async function handleManualAction(
     const productId = String(payload.productId || "").trim();
     const name = String(payload.name || "").trim();
     if (!productId || !name) return jsonRes({ ok: false, error: "Thiếu mã hoặc tên sản phẩm." }, 400);
-    const patchBody = {
+    const patchBody: Record<string, unknown> = {
       name,
       category: String(payload.category || "Tài khoản AI").trim(),
       description: String(payload.description || "").trim(),
       warranty: String(payload.warranty || "").trim() || "Bảo hành 1 đổi 1 trọn kỳ",
       image_url: String(payload.image_url || "").trim(),
     };
+    if (payload.detail_image_url !== undefined) {
+      patchBody.detail_image_url = String(payload.detail_image_url || "").trim();
+    }
     const res = await fetch(`${supabaseUrl}/rest/v1/products?id=eq.${encodeURIComponent(productId)}`, {
       method: "PATCH",
       headers: { ...svcHeaders, Prefer: "return=representation" },

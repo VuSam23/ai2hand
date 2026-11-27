@@ -15,13 +15,16 @@ CREATE TABLE IF NOT EXISTS public.products (
   description text DEFAULT '',
   is_active boolean NOT NULL DEFAULT true,
   variant_prices jsonb NOT NULL DEFAULT '{}'::jsonb,
-  image_url text NOT NULL DEFAULT ''
+  image_url text NOT NULL DEFAULT '',
+  detail_image_url text NOT NULL DEFAULT ''
 );
 
 ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS variant_prices jsonb NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS image_url text NOT NULL DEFAULT '';
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS detail_image_url text NOT NULL DEFAULT '';
 ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS manual_stocks jsonb NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE public.products

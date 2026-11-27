@@ -39,7 +39,7 @@ export async function handleAddManualVariant(btn, state, refreshCatalogUi) {
   const vals = await openFormDialog({
     title: `Thêm biến thể / Cấp thủ công (${btn.dataset.name || 'Gói'})`,
     fields: [
-      { name: 'duration', label: 'Thời hạn', type: 'select', options: DURATION_VARIANTS.map((d) => d.label), value: '1 Tháng' },
+      { name: 'duration', label: 'Thời hạn (chọn hoặc tự nhập)', type: 'text', list: 'duration-presets', value: '1 Tháng', required: true },
       { name: 'accountType', label: 'Loại tài khoản', type: 'select', options: ACCOUNT_TYPES.map((t) => t.label), value: 'Nâng cấp chính chủ' },
       { name: 'price', label: 'Giá bán (VNĐ >= 1000)', type: 'number', min: 1000, value: '60000', required: true },
       { name: 'qty', label: 'Số suất Cấp thủ công (0 nếu chỉ đặt giá)', type: 'number', min: 0, value: '10', required: true },
@@ -48,7 +48,8 @@ export async function handleAddManualVariant(btn, state, refreshCatalogUi) {
   if (!vals) return;
   const price = Math.round(Number(vals.price) || 0);
   if (price < 1000) return showToast('Giá bán phải từ 1.000đ trở lên.', 'error');
-  const vKey = `${vals.duration}|${vals.accountType}`;
+  const cleanDur = String(vals.duration || '1 Tháng').replace(/\|/g, '-').trim() || '1 Tháng';
+  const vKey = `${cleanDur}|${vals.accountType}`;
   const qty = Math.max(0, Number.parseInt(vals.qty, 10) || 0);
   try {
     await adminUpdateManualStock(btn.dataset.id, vKey, qty, price);
@@ -107,7 +108,8 @@ export async function handleEditProduct(btn, state, refreshCatalogUi) {
       { name: 'category', label: 'Danh mục', type: 'select', options: catOpts, value: prod.category },
       { name: 'description', label: 'Mô tả ngắn', value: prod.description },
       { name: 'warranty', label: 'Thời gian bảo hành', value: prod.warranty },
-      { name: 'image_url', label: 'URL ảnh đại diện', type: 'url', value: prod.imageUrl || '' },
+      { name: 'image_url', label: 'Ảnh đại diện (Avatar thẻ ngoài)', type: 'url', value: prod.imageUrl || '', uploadMaxSize: 256, uploadPrefix: 'icon' },
+      { name: 'detail_image_url', label: 'Ảnh chi tiết sản phẩm (Banner 16:9 / 4:3)', type: 'url', value: prod.rawDetailImageUrl || '', placeholder: 'Bỏ trống = tự dùng ảnh đại diện', uploadMaxSize: 1280, uploadPrefix: 'banner' },
     ],
   });
   if (!vals?.name?.trim()) return;

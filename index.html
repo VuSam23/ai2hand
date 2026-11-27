@@ -824,13 +824,25 @@
                   <label for="admin-warranty">Thời gian bảo hành</label>
                   <input id="admin-warranty" type="text" class="form-input" placeholder="Ví dụ: Bảo hành 1 đổi 1 trọn kỳ" value="Bảo hành 1 đổi 1 trọn kỳ" />
                 </div>
-                <div class="form-group">
-                  <label for="admin-image-url">Ảnh đại diện gói (Logo/Icon)</label>
-                  <div class="admin-image-picker">
-                    <div class="admin-image-preview" id="admin-image-preview">IMG</div>
-                    <div class="admin-image-inputs">
-                      <input id="admin-image-url" type="url" class="form-input" placeholder="Dán URL ảnh hoặc chọn tệp bên dưới..." />
-                      <input id="admin-image-file" type="file" accept="image/png,image/jpeg,image/webp" class="form-input" />
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="admin-image-url">Ảnh đại diện (Avatar thẻ ngoài)</label>
+                    <div class="admin-image-picker">
+                      <div class="admin-image-preview" id="admin-image-preview">IMG</div>
+                      <div class="admin-image-inputs">
+                        <input id="admin-image-url" type="url" class="form-input" placeholder="Dán URL ảnh đại diện..." />
+                        <input id="admin-image-file" type="file" accept="image/png,image/jpeg,image/webp" class="form-input" />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="admin-detail-image-url">Ảnh chi tiết sản phẩm (Banner 16:9 / 4:3)</label>
+                    <div class="admin-image-picker">
+                      <div class="admin-image-preview is-banner" id="admin-detail-image-preview">BANNER</div>
+                      <div class="admin-image-inputs">
+                        <input id="admin-detail-image-url" type="url" class="form-input" placeholder="Dán URL banner (bỏ trống = lấy Avatar)..." />
+                        <input id="admin-detail-image-file" type="file" accept="image/png,image/jpeg,image/webp" class="form-input" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -867,13 +879,27 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label for="admin-import-duration">Thời hạn key</label>
-                    <select id="admin-import-duration" class="form-input">
-                      <option value="1 Tháng">1 Tháng</option>
-                      <option value="2 Tháng">2 Tháng</option>
-                      <option value="3 Tháng">3 Tháng</option>
-                      <option value="6 Tháng">6 Tháng</option>
-                      <option value="12 Tháng">12 Tháng</option>
-                    </select>
+                    <input
+                      id="admin-import-duration"
+                      type="text"
+                      list="duration-presets"
+                      class="form-input"
+                      value="1 Tháng"
+                      placeholder="Chọn hoặc tự nhập (vd: 7 ngày, 18 tháng...)"
+                      required
+                    />
+                    <datalist id="duration-presets">
+                      <option value="1 ngày"></option>
+                      <option value="7 ngày"></option>
+                      <option value="14 ngày"></option>
+                      <option value="1 Tháng"></option>
+                      <option value="2 Tháng"></option>
+                      <option value="3 Tháng"></option>
+                      <option value="6 Tháng"></option>
+                      <option value="12 Tháng"></option>
+                      <option value="18 Tháng"></option>
+                      <option value="Vĩnh viễn"></option>
+                    </datalist>
                   </div>
                   <div class="form-group">
                     <label for="admin-import-type">Loại tài khoản</label>
@@ -950,14 +976,13 @@
                   </div>
                   <div class="form-group">
                     <label for="admin-promo-duration">Thời hạn áp dụng</label>
-                    <select id="admin-promo-duration" class="form-input">
-                      <option value="">Tất cả thời hạn</option>
-                      <option value="1 Tháng">1 Tháng</option>
-                      <option value="2 Tháng">2 Tháng</option>
-                      <option value="3 Tháng">3 Tháng</option>
-                      <option value="6 Tháng">6 Tháng</option>
-                      <option value="12 Tháng">12 Tháng</option>
-                    </select>
+                    <input
+                      id="admin-promo-duration"
+                      type="text"
+                      list="duration-presets"
+                      class="form-input"
+                      placeholder="Bỏ trống = Tất cả thời hạn (hoặc chọn/nhập)"
+                    />
                   </div>
                   <button type="submit" class="btn btn-primary">Lưu Mã Giảm Giá</button>
                 </form>

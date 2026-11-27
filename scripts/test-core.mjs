@@ -131,23 +131,53 @@ test('5. Bien the ton kho, Cap thu cong, Promo va Cheapest Variant', () => {
     name: 'Claude Pro',
     price: 60000,
     isActive: true,
-    stock: 6,
-    variantStocks: { '1 Tháng|TK cấp sẵn': 2 },
-    manualStocks: { '3 Tháng|Nâng cấp chính chủ': 4 },
-    variantPrices: { '1 Tháng|TK cấp sẵn': 89000, '3 Tháng|Nâng cấp chính chủ': 210000, '6 Tháng|Dùng chung': 120000 },
+    stock: 9,
+    variantStocks: { '1 Tháng|TK cấp sẵn': 2, '7 ngày|TK cấp sẵn': 3 },
+    manualStocks: { '18 Tháng|Nâng cấp chính chủ': 4 },
+    variantPrices: {
+      '7 ngày|TK cấp sẵn': 29000,
+      '1 Tháng|TK cấp sẵn': 89000,
+      '18 Tháng|Nâng cấp chính chủ': 450000,
+      '6 Tháng|Dùng chung': 120000,
+    },
   };
+  assert.equal(mappers.getVariantStock(prod, '7 ngày', 'TK cấp sẵn'), 3);
   assert.equal(mappers.getVariantStock(prod, '1 Tháng', 'TK cấp sẵn'), 2);
-  assert.equal(mappers.getVariantStock(prod, '3 Tháng', 'Nâng cấp chính chủ'), 4);
+  assert.equal(mappers.getVariantStock(prod, '18 Tháng', 'Nâng cấp chính chủ'), 4);
   assert.equal(mappers.getVariantStock(prod, '6 Tháng', 'Dùng chung'), 0);
-  assert.equal(mappers.isVariantManual(prod, '3 Tháng', 'Nâng cấp chính chủ'), true);
-  assert.equal(mappers.isVariantManual(prod, '1 Tháng', 'TK cấp sẵn'), false);
+  assert.equal(mappers.isVariantManual(prod, '18 Tháng', 'Nâng cấp chính chủ'), true);
+  assert.equal(mappers.isVariantManual(prod, '7 ngày', 'TK cấp sẵn'), false);
+
+  const durations = uiStore.getProductDurations(prod).map((d) => d.label);
+  assert.equal(durations.includes('7 ngày'), true);
+  assert.equal(durations.includes('18 Tháng'), true);
 
   const cheapest = uiStore.getCheapestVariant(prod);
-  assert.equal(cheapest.label, '1 Tháng');
+  assert.equal(cheapest.label, '7 ngày');
   assert.equal(cheapest.accountType, 'TK cấp sẵn');
-  assert.equal(cheapest.price, 89000);
-  assert.equal(cheapest.stock, 2);
+  assert.equal(cheapest.price, 29000);
+  assert.equal(cheapest.stock, 3);
+  assert.equal(cheapest.strike, 0);
 
   assert.equal(promoApi.calculatePromoDiscount({ discountType: 'percent', discountValue: 20 }, 100000), 20000);
   assert.equal(promoApi.calculatePromoDiscount({ discountType: 'fixed', discountValue: 150000 }, 100000), 100000);
+
+  const mappedWithBanner = mappers.normalizeProduct({
+    id: 'capcut-pro',
+    name: 'CapCut Pro',
+    price: 50000,
+    image_url: 'https://example.com/avatar.webp',
+    detail_image_url: 'https://example.com/banner-sale.webp',
+  });
+  assert.equal(mappedWithBanner.imageUrl, 'https://example.com/avatar.webp');
+  assert.equal(mappedWithBanner.detailImageUrl, 'https://example.com/banner-sale.webp');
+
+  const mappedFallback = mappers.normalizeProduct({
+    id: 'canva-pro',
+    name: 'Canva Pro',
+    price: 45000,
+    image_url: 'https://example.com/canva-avatar.webp',
+  });
+  assert.equal(mappedFallback.imageUrl, 'https://example.com/canva-avatar.webp');
+  assert.equal(mappedFallback.detailImageUrl, 'https://example.com/canva-avatar.webp');
 });

@@ -20,6 +20,8 @@ export function normalizeProduct(row, stockInfoMap = new Map()) {
   const variantPrices = row.variant_prices && typeof row.variant_prices === 'object' ? row.variant_prices : {};
   const manualStocks = row.manual_stocks && typeof row.manual_stocks === 'object' ? row.manual_stocks : {};
   const manualTotal = Object.values(manualStocks).reduce((sum, v) => sum + Math.max(0, Number(v) || 0), 0);
+  const imageUrl = String(row.image_url || '').trim();
+  const rawDetailImageUrl = String(row.detail_image_url || row.banner_url || '').trim();
   return {
     id,
     name: row.name,
@@ -32,7 +34,9 @@ export function normalizeProduct(row, stockInfoMap = new Map()) {
     variantPrices,
     manualStocks: isActive ? manualStocks : {},
     warranty: String(row.warranty || '').trim() || 'Bảo hành 1 đổi 1 trọn kỳ',
-    imageUrl: String(row.image_url || '').trim(),
+    imageUrl,
+    detailImageUrl: rawDetailImageUrl || imageUrl,
+    rawDetailImageUrl,
     isActive,
     emblem: String(row.name || 'AC').slice(0, 2).toUpperCase(),
     tagline: `${row.category || 'Bản quyền'} • Cấp tự động 24/7`,

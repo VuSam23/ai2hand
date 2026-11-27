@@ -24,7 +24,7 @@ export function switchAdminTab(tabKey = 'stats') {
 
 export function syncImportPriceInput(products = []) {
   const pid = document.getElementById('admin-import-product')?.value || '';
-  const dur = document.getElementById('admin-import-duration')?.value || '1 Tháng';
+  const dur = (document.getElementById('admin-import-duration')?.value || '').replace(/\|/g, '-').trim() || '1 Tháng';
   const type = document.getElementById('admin-import-type')?.value || 'TK cấp sẵn';
   const priceEl = document.getElementById('admin-import-price');
   if (!priceEl) return;

@@ -50,6 +50,9 @@ function sanitizeProductPayload(raw: Record<string, unknown>, idOverride?: strin
   if (raw.image_url !== undefined) {
     row.image_url = String(raw.image_url || "").trim();
   }
+  if (raw.detail_image_url !== undefined) {
+    row.detail_image_url = String(raw.detail_image_url || "").trim();
+  }
   if (raw.warranty !== undefined && String(raw.warranty).trim()) {
     row.warranty = String(raw.warranty).trim();
   }
@@ -199,7 +202,7 @@ serve(async (req) => {
       const productId = String(payload.productId || "").trim();
       if (!productId) return jsonRes({ ok: false, error: "Thiếu productId gói cần nạp kho" }, 400);
 
-      const duration = String(payload.duration || "1 Tháng").trim();
+      const duration = String(payload.duration || "1 Tháng").replace(/\|/g, "-").trim() || "1 Tháng";
       const accountType = String(payload.accountType || "TK cấp sẵn").trim();
       const lines = Array.isArray(payload.lines) ? payload.lines : [];
       if (lines.length === 0) return jsonRes({ ok: false, error: "Danh sách key rỗng" }, 400);

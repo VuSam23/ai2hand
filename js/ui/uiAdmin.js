@@ -37,38 +37,42 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
     switchAdminTab(tabBtn.dataset.adminTab);
     if (tabBtn.dataset.adminTab === 'inventory') refreshAdminKeys(state);
   });
-  const renderImagePreview = (url = '') => {
-    const box = document.getElementById('admin-image-preview');
+  const renderImagePreview = (url = '', boxId = 'admin-image-preview', fallback = 'IMG') => {
+    const box = document.getElementById(boxId);
     if (!box) return;
     if (/^https?:\/\//i.test(url.trim())) {
-      box.innerHTML = `<img class="product-logo-img" src="${url.trim().replace(/"/g, '&quot;')}" alt="Preview" onerror="this.parentElement.textContent='IMG'" />`;
+      box.innerHTML = `<img class="product-logo-img" src="${url.trim().replace(/"/g, '&quot;')}" alt="Preview" onerror="this.parentElement.textContent='${fallback}'" />`;
     } else {
-      box.textContent = 'IMG';
+      box.textContent = fallback;
     }
   };
 
-  document.getElementById('admin-image-url')?.addEventListener('input', (e) => {
-    renderImagePreview(e.target.value);
-  });
+  const bindImagePicker = (urlId, fileId, previewId, fallback, maxSize, prefix, label) => {
+    document.getElementById(urlId)?.addEventListener('input', (e) => {
+      renderImagePreview(e.target.value, previewId, fallback);
+    });
+    document.getElementById(fileId)?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const urlInput = document.getElementById(urlId);
+      e.target.disabled = true;
+      try {
+        showToast(`Đang nén & tải ${label} lên kho...`, 'info');
+        const publicUrl = await uploadProductIcon(file, maxSize, prefix);
+        if (urlInput) urlInput.value = publicUrl;
+        renderImagePreview(publicUrl, previewId, fallback);
+        showToast(`Đã tải ${label} thành công!`, 'success');
+      } catch (err) {
+        showToast(err.message || 'Không thể tải ảnh lên Storage.', 'error');
+      } finally {
+        e.target.disabled = false;
+        e.target.value = '';
+      }
+    });
+  };
 
-  document.getElementById('admin-image-file')?.addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const urlInput = document.getElementById('admin-image-url');
-    e.target.disabled = true;
-    try {
-      showToast('Đang nén & tải ảnh lên kho...', 'info');
-      const publicUrl = await uploadProductIcon(file);
-      if (urlInput) urlInput.value = publicUrl;
-      renderImagePreview(publicUrl);
-      showToast('Đã tải ảnh đại diện thành công!', 'success');
-    } catch (err) {
-      showToast(err.message || 'Không thể tải ảnh lên Storage.', 'error');
-    } finally {
-      e.target.disabled = false;
-      e.target.value = '';
-    }
-  });
+  bindImagePicker('admin-image-url', 'admin-image-file', 'admin-image-preview', 'IMG', 256, 'icon', 'ảnh đại diện');
+  bindImagePicker('admin-detail-image-url', 'admin-detail-image-file', 'admin-detail-image-preview', 'BANNER', 1280, 'banner', 'ảnh banner chi tiết');
 
   document.getElementById('admin-add-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -80,11 +84,13 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
         description: document.getElementById('admin-desc').value,
         warranty: document.getElementById('admin-warranty')?.value.trim() || 'Bảo hành 1 đổi 1 trọn kỳ',
         image_url: document.getElementById('admin-image-url')?.value.trim() || '',
+        detail_image_url: document.getElementById('admin-detail-image-url')?.value.trim() || '',
       });
       state.products = await fetchProducts();
       refreshCatalogUi();
       e.target.reset();
-      renderImagePreview('');
+      renderImagePreview('', 'admin-image-preview', 'IMG');
+      renderImagePreview('', 'admin-detail-image-preview', 'BANNER');
       showToast(`Đã tạo gói "${created.name}"! Hãy nạp kho & đặt giá biến thể bên cạnh.`, 'success');
     } catch (err) {
       showToast(err.message || 'Không thể thêm gói mới.', 'error');
@@ -92,7 +98,9 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
   });
 
   ['admin-import-product', 'admin-import-duration', 'admin-import-type'].forEach((id) => {
-    document.getElementById(id)?.addEventListener('change', () => syncImportPriceInput(state.products));
+    const el = document.getElementById(id);
+    el?.addEventListener('change', () => syncImportPriceInput(state.products));
+    if (id === 'admin-import-duration') el?.addEventListener('input', () => syncImportPriceInput(state.products));
   });
 
   document.getElementById('admin-import-form')?.addEventListener('submit', async (e) => {
@@ -102,7 +110,7 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
       const productId = selectEl?.value?.trim() || '';
       if (!productId) return showToast('Vui lòng chọn gói sản phẩm cần nạp kho.', 'error');
 
-      const duration = document.getElementById('admin-import-duration')?.value || '1 Tháng';
+      const duration = (document.getElementById('admin-import-duration')?.value || '').replace(/\|/g, '-').trim() || '1 Tháng';
       const accountType = document.getElementById('admin-import-type')?.value || 'TK cấp sẵn';
       const variantPrice = Math.round(Number(document.getElementById('admin-import-price')?.value) || 0);
       const res = await adminImportCredentials(
@@ -188,7 +196,7 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
       const discountType = document.getElementById('admin-promo-type').value;
       const discountValue = Math.round(Number(document.getElementById('admin-promo-value').value) || 0);
       const productId = document.getElementById('admin-promo-product').value || null;
-      const duration = document.getElementById('admin-promo-duration')?.value || null;
+      const duration = (document.getElementById('admin-promo-duration')?.value || '').replace(/\|/g, '-').trim() || null;
       if (discountType === 'percent' && (discountValue < 1 || discountValue > 100)) {
         return showToast('Giảm giá theo % phải từ 1 đến 100.', 'error');
       }

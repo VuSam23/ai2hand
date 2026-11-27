@@ -39,7 +39,7 @@ export function resizeImageToBlob(file, maxSize = 256) {
   });
 }
 
-export async function uploadProductIcon(file) {
+export async function uploadProductIcon(file, maxSize = 256, prefix = 'icon') {
   if (!isSupabaseConfigured()) {
     throw new Error('Tính năng tải ảnh lên Storage chỉ hoạt động khi kết nối Supabase.');
   }
@@ -55,9 +55,10 @@ export async function uploadProductIcon(file) {
     session = await refreshAccessToken();
   }
 
-  const blob = await resizeImageToBlob(file, 256);
+  const blob = await resizeImageToBlob(file, maxSize);
   const origin = SUPABASE_CONFIG.restUrl.replace(/\/rest\/v1\/?$/, '');
-  const fileName = `icon-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.webp`;
+  const cleanPrefix = String(prefix || 'icon').replace(/[^a-z0-9_-]/gi, '') || 'icon';
+  const fileName = `${cleanPrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.webp`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12000);
 
