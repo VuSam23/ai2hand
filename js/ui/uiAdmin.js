@@ -5,10 +5,7 @@ import { fetchProducts } from '../services/supabaseApi.js';
 import { uploadProductIcon } from '../services/imageUpload.js';
 import {
   adminAddProduct,
-  adminUpdateStock,
-  adminUpdatePrice,
   adminUpdateVariantPrice,
-  adminDeleteProduct,
   adminImportCredentials,
   adminListPromos,
   adminUpsertPromo,
@@ -17,15 +14,28 @@ import {
   resetDemoData,
 } from '../services/adminApi.js';
 import { showToast, copyText } from './uiCommon.js';
+import { openConfirmDialog } from './uiDialog.js';
 import { renderAdminOrders, renderAdminPromos, renderAdminView, syncImportPriceInput, switchAdminTab } from './uiAdminRender.js';
-import { handleEditManualStock, handleAddManualVariant, handleCompleteManualOrder, handleEditWarranty } from './uiAdminManual.js';
+import {
+  handleEditManualStock,
+  handleAddManualVariant,
+  handleCompleteManualOrder,
+  handleEditWarranty,
+  handleEditProduct,
+  refreshAdminKeys,
+  handleDeleteKey,
+  handlePriceDialog,
+  handleProductAction,
+} from './uiAdminManual.js';
 
 export { renderAdminOrders, renderAdminPromos, renderAdminView, switchAdminTab };
 
 export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData }) {
   document.getElementById('admin-sidebar-nav')?.addEventListener('click', (e) => {
     const tabBtn = e.target.closest('[data-admin-tab]');
-    if (tabBtn) switchAdminTab(tabBtn.dataset.adminTab);
+    if (!tabBtn) return;
+    switchAdminTab(tabBtn.dataset.adminTab);
+    if (tabBtn.dataset.adminTab === 'inventory') refreshAdminKeys(state);
   });
   const renderImagePreview = (url = '') => {
     const box = document.getElementById('admin-image-preview');
@@ -106,6 +116,7 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
       }
       state.products = await fetchProducts();
       refreshCatalogUi();
+      await refreshAdminKeys(state);
       if (selectEl) selectEl.value = productId;
       syncImportPriceInput(state.products);
       document.getElementById('admin-import-lines').value = '';
@@ -137,83 +148,30 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
     }
 
     const editVarBtn = e.target.closest('[data-action="edit-variant-price"]');
-    if (editVarBtn) {
-      const vKey = editVarBtn.dataset.variantKey;
-      const raw = window.prompt(`Nhập giá mới cho "${vKey.replace('|', ' • ')}" (VNĐ):`, editVarBtn.dataset.price || '');
-      if (raw === null) return;
-      const nextPrice = Number(raw.replace(/[^\d]/g, ''));
-      if (!Number.isFinite(nextPrice) || nextPrice < 1000) {
-        return showToast('Giá bán không hợp lệ (tối thiểu 1.000đ).', 'error');
-      }
-      try {
-        await adminUpdateVariantPrice(editVarBtn.dataset.id, vKey, nextPrice);
-        state.products = await fetchProducts();
-        refreshCatalogUi();
-        showToast('Đã cập nhật giá biến thể thành công!', 'success');
-      } catch (err) {
-        showToast(err.message || 'Không thể cập nhật giá biến thể.', 'error');
-      }
-      return;
-    }
-
+    if (editVarBtn) return handlePriceDialog(editVarBtn, state, refreshCatalogUi, true);
     const editManualBtn = e.target.closest('[data-action="edit-manual-stock"]');
     if (editManualBtn) return handleEditManualStock(editManualBtn, state, refreshCatalogUi);
-
     const addManualBtn = e.target.closest('[data-action="add-manual-variant"]');
     if (addManualBtn) return handleAddManualVariant(addManualBtn, state, refreshCatalogUi);
-
     const warrantyBtn = e.target.closest('[data-action="edit-warranty"]');
     if (warrantyBtn) return handleEditWarranty(warrantyBtn, state, refreshCatalogUi);
-
+    const editProdBtn = e.target.closest('[data-action="edit-product"]');
+    if (editProdBtn) return handleEditProduct(editProdBtn, state, refreshCatalogUi);
     const toggleBtn = e.target.closest('[data-action="toggle-active"]');
-    if (toggleBtn) {
-      toggleBtn.disabled = true;
-      try {
-        const nextActive = toggleBtn.dataset.active !== 'true';
-        await adminUpdateStock(toggleBtn.dataset.id, nextActive);
-        state.products = await fetchProducts();
-        refreshCatalogUi();
-        showToast(`Đã chuyển gói sang trạng thái: ${nextActive ? 'Đang bán' : 'Tạm ẩn'}.`, 'success');
-      } catch (err) {
-        showToast(err.message || 'Lỗi cập nhật trạng thái gói.', 'error');
-        toggleBtn.disabled = false;
-      }
-      return;
-    }
-
+    if (toggleBtn) return handleProductAction(toggleBtn, state, refreshCatalogUi, false);
     const editBtn = e.target.closest('[data-action="edit-price"]');
-    if (editBtn) {
-      const raw = window.prompt('Nhập giá mặc định mới (VNĐ, tối thiểu 1000):', editBtn.dataset.price || '');
-      if (raw === null) return;
-      const nextPrice = Number(raw.replace(/[^\d]/g, ''));
-      if (!Number.isFinite(nextPrice) || nextPrice < 1000) {
-        return showToast('Giá bán không hợp lệ (tối thiểu 1.000đ).', 'error');
-      }
-      try {
-        await adminUpdatePrice(editBtn.dataset.id, nextPrice);
-        state.products = await fetchProducts();
-        refreshCatalogUi();
-        showToast('Đã cập nhật giá gói thành công!', 'success');
-      } catch (err) {
-        showToast(err.message || 'Không thể cập nhật giá.', 'error');
-      }
-      return;
-    }
-
+    if (editBtn) return handlePriceDialog(editBtn, state, refreshCatalogUi, false);
     const delBtn = e.target.closest('[data-action="delete-product"]');
-    if (delBtn) {
-      if (!window.confirm(`Xác nhận xóa vĩnh viễn gói "${delBtn.dataset.name}"?`)) return;
-      delBtn.disabled = true;
-      try {
-        await adminDeleteProduct(delBtn.dataset.id);
-        state.products = await fetchProducts();
-        refreshCatalogUi();
-        showToast(`Đã xóa gói "${delBtn.dataset.name}".`, 'success');
-      } catch (err) {
-        showToast(err.message || 'Không thể xóa gói.', 'error');
-        delBtn.disabled = false;
-      }
-    }
+    if (delBtn) return handleProductAction(delBtn, state, refreshCatalogUi, true);
+  });
+
+  document.getElementById('admin-order-search')?.addEventListener('input', () => renderAdminOrders());
+  document.getElementById('admin-order-status-filter')?.addEventListener('change', () => renderAdminOrders());
+  document.getElementById('admin-keys-filter')?.addEventListener('change', () => refreshAdminKeys(state));
+  document.getElementById('admin-refresh-keys-btn')?.addEventListener('click', () => refreshAdminKeys(state));
+  document.getElementById('admin-keys-list')?.addEventListener('click', (e) => {
+    const delKeyBtn = e.target.closest('[data-action="delete-key"]');
+    if (delKeyBtn) handleDeleteKey(delKeyBtn, state, refreshCatalogUi);
   });
 
   document.getElementById('admin-orders-list')?.addEventListener('click', (e) => {
@@ -262,7 +220,13 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
     }
     const delBtn = e.target.closest('[data-action="delete-promo"]');
     if (delBtn) {
-      if (!window.confirm(`Xóa mã giảm giá "${delBtn.dataset.code}"?`)) return;
+      const ok = await openConfirmDialog({
+        title: 'Xóa mã giảm giá',
+        message: `Xóa mã giảm giá "${delBtn.dataset.code}"?`,
+        confirmLabel: 'Xóa mã',
+        isDanger: true,
+      });
+      if (!ok) return;
       delBtn.disabled = true;
       try {
         await adminDeletePromo(delBtn.dataset.id);

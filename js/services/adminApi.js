@@ -51,18 +51,18 @@ export function startDemoUserSession() {
     isDemo: true,
   };
   try {
-    sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(demoSession));
+    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(demoSession));
   } catch {
-    // Bỏ qua lỗi sessionStorage
+    // Bỏ qua lỗi localStorage
   }
   return demoSession;
 }
 
 export function adminLogout() {
   try {
-    sessionStorage.removeItem(AUTH_SESSION_KEY);
+    localStorage.removeItem(AUTH_SESSION_KEY);
   } catch {
-    // Bỏ qua lỗi sessionStorage
+    // Bỏ qua lỗi localStorage
   }
 }
 
@@ -142,6 +142,19 @@ export async function userResetPassword(email) {
     await authPost('recover', { email: cleanEmail }).catch(() => null);
   }
   return 'Nếu email tồn tại trong hệ thống, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.';
+}
+
+export async function updateAuthPassword(newPassword, accessTokenOverride = '') {
+  const token = String(accessTokenOverride || getAdminSession()?.accessToken || '').trim();
+  if (!token || String(newPassword || '').length < 8) throw new Error('Mật khẩu mới phải có ít nhất 8 ký tự.');
+  const res = await fetchWithTimeout(`${getSupabaseOrigin()}/auth/v1/user`, {
+    method: 'PUT',
+    headers: { apikey: SUPABASE_CONFIG.publishableKey.trim(), Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: String(newPassword) }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.msg || data?.message || 'Link đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.');
+  return data;
 }
 
 const SESSION_EXPIRED_MSG = 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.';

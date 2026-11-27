@@ -8,6 +8,7 @@ import { renderAdminStats } from './uiAdminStats.js';
 
 const ADMIN_TABS = ['stats', 'products', 'inventory', 'orders'];
 let activeAdminTab = 'stats';
+let cachedAdminOrders = [];
 
 export function switchAdminTab(tabKey = 'stats') {
   const nextTab = ADMIN_TABS.includes(tabKey) ? tabKey : 'stats';
@@ -32,16 +33,30 @@ export function syncImportPriceInput(products = []) {
   priceEl.value = vPrice >= 1000 ? String(vPrice) : '';
 }
 
-export function renderAdminOrders(orders = []) {
+export function renderAdminOrders(orders = null) {
+  if (orders !== null) cachedAdminOrders = Array.isArray(orders) ? orders : [];
   const container = document.getElementById('admin-orders-list');
   if (!container) return;
 
-  if (!Array.isArray(orders) || orders.length === 0) {
-    container.innerHTML = `<div class="empty-state">Chưa có đơn hàng tự động nào gần đây.</div>`;
+  const q = (document.getElementById('admin-order-search')?.value || '').trim().toLowerCase();
+  const stFilter = document.getElementById('admin-order-status-filter')?.value || 'all';
+  const filtered = cachedAdminOrders.filter((o) => {
+    const st = String(o.status || 'pending').toLowerCase();
+    const matchSt = stFilter === 'all' || st === stFilter;
+    const matchQ =
+      !q ||
+      String(o.order_code || o.orderCode || '').toLowerCase().includes(q) ||
+      String(o.contact || '').toLowerCase().includes(q) ||
+      String(o.product_name || o.productName || '').toLowerCase().includes(q);
+    return matchSt && matchQ;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state">${cachedAdminOrders.length === 0 ? 'Chưa có đơn hàng tự động nào gần đây.' : 'Không có đơn hàng khớp bộ lọc.'}</div>`;
     return;
   }
 
-  container.innerHTML = orders
+  container.innerHTML = filtered
     .map((o) => {
       const code = o.order_code || o.orderCode;
       const name = o.product_name || o.productName;
@@ -55,7 +70,7 @@ export function renderAdminOrders(orders = []) {
       const cred = o.delivered_credential || '';
       return `
         <div class="admin-stock-row">
-          <div>
+          <div style="min-width:0;flex:1;">
             <strong class="order-code">#${escapeHtml(code)}</strong> • ${escapeHtml(name)}
             <div class="section-subtitle">${escapeHtml(duration)} • ${escapeHtml(accountType)} • ${escapeHtml(o.contact)} • ${formatVnd(amount)}</div>
           </div>
@@ -87,7 +102,7 @@ export function renderAdminPromos(promos = [], products = []) {
       const durText = pm.duration || 'Mọi thời hạn';
       return `
         <div class="admin-stock-row">
-          <div>
+          <div style="min-width:0;flex:1;">
             <strong class="order-code">${escapeHtml(pm.code)}</strong> • Giảm ${escapeHtml(valText)}
             <div class="section-subtitle">Áp dụng: ${escapeHtml(prodName)} • ${escapeHtml(durText)}</div>
           </div>
@@ -141,6 +156,14 @@ export function renderAdminView(products, orders = null, promos = null) {
       .join('')}`;
     if (prevPromo && products.some((p) => p.id === prevPromo)) promoSelect.value = prevPromo;
   }
+  const keysFilter = document.getElementById('admin-keys-filter');
+  if (keysFilter) {
+    const prevKeyProd = keysFilter.value || '';
+    keysFilter.innerHTML = `<option value="">Tất cả sản phẩm</option>${products
+      .map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`)
+      .join('')}`;
+    if (prevKeyProd && products.some((p) => p.id === prevKeyProd)) keysFilter.value = prevKeyProd;
+  }
   syncImportPriceInput(products);
 
   const stockList = document.getElementById('admin-stock-list');
@@ -164,7 +187,7 @@ export function renderAdminView(products, orders = null, promos = null) {
                   const priceText = customPrice >= 1000 ? formatVnd(customPrice) : 'Giá mặc định';
                   const manualBadge = manualQty > 0 ? ` • Thủ công: ${manualQty}` : '';
                   return `
-                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem;font-size:0.8rem;">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem;font-size:0.8rem;min-width:0;">
                       <span class="card-stock ${qty === 0 && manualQty === 0 ? 'is-empty' : qty + manualQty <= 2 ? 'is-low' : ''}">${escapeHtml(dur)} • ${escapeHtml(type)}: ${qty} key${manualBadge} (${priceText})</span>
                       <button type="button" class="copy-btn" data-action="edit-variant-price" data-id="${escapeHtml(p.id)}" data-variant-key="${escapeHtml(key)}" data-price="${customPrice || p.price}">Sửa giá</button>
                       <button type="button" class="copy-btn" data-action="edit-manual-stock" data-id="${escapeHtml(p.id)}" data-variant-key="${escapeHtml(key)}" data-manual-stock="${manualQty}">Cấp thủ công</button>
@@ -175,13 +198,14 @@ export function renderAdminView(products, orders = null, promos = null) {
             : '<span class="section-subtitle">Chưa cấu hình biến thể hoặc key trong kho</span>';
         return `
         <div class="admin-stock-row">
-          <div style="flex:1;min-width:220px;">
+          <div style="flex:1 1 220px;min-width:0;">
             <strong>${escapeHtml(p.name)}</strong>
             <div class="section-subtitle">${escapeHtml(p.category)} • Giá từ ${formatVnd(p.price)} • ${escapeHtml(p.warranty)}</div>
-            <div style="display:flex;flex-direction:column;gap:0.3rem;margin-top:0.45rem;">${variantHtml}</div>
+            <div style="display:flex;flex-direction:column;gap:0.3rem;margin-top:0.45rem;min-width:0;">${variantHtml}</div>
           </div>
           <div class="admin-stock-controls">
             <span class="card-stock ${stockClass}">Tổng kho: ${p.stock} key</span>
+            <button type="button" class="btn btn-ghost" data-action="edit-product" data-id="${escapeHtml(p.id)}">Sửa thông tin</button>
             <button type="button" class="btn btn-ghost" data-action="add-manual-variant" data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}">+ Biến thể / Thủ công</button>
             <button type="button" class="btn btn-ghost" data-action="edit-warranty" data-id="${escapeHtml(p.id)}" data-warranty="${escapeHtml(p.warranty)}">Sửa bảo hành</button>
             <button type="button" class="btn btn-ghost" data-action="edit-price" data-id="${escapeHtml(p.id)}" data-price="${p.price}">Sửa giá gốc</button>
@@ -200,4 +224,29 @@ export function renderAdminView(products, orders = null, promos = null) {
     renderAdminStats(products, orders);
   }
   if (promos !== null) renderAdminPromos(promos, products);
+}
+
+export function renderAdminKeysList(keys = [], products = []) {
+  const box = document.getElementById('admin-keys-list');
+  if (!box) return;
+  if (!Array.isArray(keys) || keys.length === 0) {
+    box.innerHTML = '<div class="empty-state">Không có key chưa bán nào.</div>';
+    return;
+  }
+  const prodMap = new Map(products.map((p) => [p.id, p.name]));
+  box.innerHTML = keys
+    .map((k) => {
+      const pName = prodMap.get(k.product_id) || k.product_id;
+      return `
+        <div class="admin-stock-row">
+          <div style="min-width:0;flex:1;">
+            <strong>${escapeHtml(pName)}</strong> • <span class="section-subtitle">${escapeHtml(k.duration || '1 Tháng')} • ${escapeHtml(k.account_type || 'TK cấp sẵn')}</span>
+            <div><code style="font-size:0.78rem;word-break:break-all;">${escapeHtml(k.credential)}</code></div>
+          </div>
+          <div class="admin-stock-controls">
+            <button type="button" class="btn btn-ghost text-error" data-action="delete-key" data-id="${escapeHtml(k.id)}">Xóa key</button>
+          </div>
+        </div>`;
+    })
+    .join('');
 }

@@ -1,17 +1,11 @@
 import { CONTACT_REGEX } from '../config/config.js';
-import { updateUserProfile } from '../services/supabaseApi.js';
-import { adminLogin, adminLogout, userSignUp, userResetPassword } from '../services/adminApi.js';
+import { getUserProfile, updateUserProfile } from '../services/supabaseApi.js';
+import { adminLogin, adminLogout, userSignUp, userResetPassword, updateAuthPassword } from '../services/adminApi.js';
 import { showToast, copyText } from './uiCommon.js';
 import { syncAuthNavUi, renderAccountView } from './uiAccount.js';
 import { switchAdminTab } from './uiAdminRender.js';
 
-export function bindAccountAndAdminEvents({
-  state,
-  refreshAccountData,
-  startCheckout,
-  openProductDetail,
-  switchView,
-}) {
+export function bindAccountAndAdminEvents({ state, startCheckout, openProductDetail, switchView }) {
   const toggleProfileEditor = (forceOpen) => {
     const card = document.getElementById('acc-profile-card');
     if (!card) return;
@@ -147,7 +141,7 @@ export function bindAccountAndAdminEvents({
   };
 
   const finishAuth = async (session) => {
-    state.userProfile = await updateUserProfile({ name: session.name, email: session.email });
+    state.userProfile = await getUserProfile();
     syncAuthNavUi();
     document.getElementById('admin-login-form')?.reset();
     showToast(session.isAdmin ? `Xin chào Admin ${session.email}!` : `Đăng nhập thành công: ${session.email}`, 'success');
@@ -250,4 +244,51 @@ export function bindAccountAndAdminEvents({
 
   document.getElementById('admin-logout-btn')?.addEventListener('click', handleLogout);
   document.getElementById('user-logout-btn')?.addEventListener('click', handleLogout);
+
+  const filterOrders = () => renderAccountView(state.userProfile, state.orders, 'orders');
+  document.getElementById('account-order-search')?.addEventListener('input', filterOrders);
+  document.getElementById('account-order-status-filter')?.addEventListener('change', filterOrders);
+
+  const closeRecovery = () => {
+    const m = document.getElementById('recovery-modal');
+    if (m) m.hidden = true;
+    document.body.style.overflow = '';
+  };
+  document.getElementById('recovery-close-btn')?.addEventListener('click', closeRecovery);
+  document.getElementById('recovery-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pwd = document.getElementById('recovery-password')?.value || '';
+    if (pwd.length < 8) return showToast('Mật khẩu mới cần tối thiểu 8 ký tự.', 'error');
+    if (pwd !== (document.getElementById('recovery-confirm')?.value || '')) return showToast('Mật khẩu xác nhận không khớp.', 'error');
+    const btn = document.getElementById('recovery-submit-btn');
+    if (btn) btn.disabled = true;
+    try {
+      await updateAuthPassword(pwd, window.__recoveryAccessToken || '');
+      delete window.__recoveryAccessToken;
+      e.target.reset();
+      closeRecovery();
+      showToast('Đã đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.', 'success');
+      switchView('admin-login');
+    } catch (err) {
+      showToast(err.message || 'Không thể đặt lại mật khẩu.', 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+}
+
+export function handlePasswordRecoveryHash() {
+  const hash = String(window.location.hash || '').replace(/^#/, '');
+  if (!hash.includes('type=recovery')) return;
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get('access_token') || '';
+  if (!accessToken || params.get('type') !== 'recovery') return;
+  window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+  window.__recoveryAccessToken = accessToken;
+  const modal = document.getElementById('recovery-modal');
+  if (modal) {
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    document.getElementById('recovery-password')?.focus();
+  }
 }

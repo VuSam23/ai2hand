@@ -85,18 +85,31 @@ export function renderAccountView(profile, orders = [], defaultTab = 'overview')
   const tbody = document.getElementById('account-orders-tbody');
   if (!tbody) return;
 
-  if (orders.length === 0) {
+  const searchQ = (document.getElementById('account-order-search')?.value || '').trim().toLowerCase();
+  const statusFilter = document.getElementById('account-order-status-filter')?.value || 'all';
+  const filteredOrders = orders.filter((o) => {
+    const st = String(o.status || 'PAID').toUpperCase();
+    const matchStatus = statusFilter === 'all' || st === statusFilter;
+    const matchQ =
+      !searchQ ||
+      String(o.orderCode || '').toLowerCase().includes(searchQ) ||
+      String(o.productName || '').toLowerCase().includes(searchQ) ||
+      String(o.contact || '').toLowerCase().includes(searchQ);
+    return matchStatus && matchQ;
+  });
+
+  if (filteredOrders.length === 0) {
     tbody.innerHTML = `
-      <tr>
+      <tr class="acc-empty-row">
         <td colspan="5" class="empty-state">
-          Tài khoản của bạn chưa có đơn hàng nào. Hãy chọn một gói ngoài Cửa hàng để nhận tài khoản tức thì!
+          ${orders.length === 0 ? 'Tài khoản của bạn chưa có đơn hàng nào. Hãy chọn một gói ngoài Cửa hàng để nhận tài khoản tức thì!' : 'Không tìm thấy đơn hàng phù hợp với bộ lọc.'}
         </td>
       </tr>
     `;
     return;
   }
 
-  tbody.innerHTML = orders
+  tbody.innerHTML = filteredOrders
     .map((order) => {
       const credText = Array.isArray(order.credentials) ? order.credentials.join('\n') : '';
       const isManual = String(order.status || '').toUpperCase() === 'PENDING_MANUAL';

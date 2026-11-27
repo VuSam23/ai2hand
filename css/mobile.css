@@ -38,7 +38,75 @@
   color: var(--color-primary);
 }
 
-/* 2. Khung nhìn Mobile (< 768px): Header 1 tầng, Lưới 2 cột, Compact Card 3 hàng, Sticky CTA */
+.duration-btn,
+.account-type-btn {
+  min-height: 44px;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+/* 2. Touch targets (>= 44px) & ngăn iOS Safari auto-zoom (< 1024px) */
+@media (max-width: 1023px) {
+  input,
+  select,
+  textarea,
+  .form-input,
+  .search-input,
+  .sort-select,
+  .mono-textarea {
+    font-size: 1rem;
+  }
+
+  .search-input {
+    min-height: 44px;
+  }
+
+  button,
+  .btn,
+  .nav-link,
+  .mobile-nav-btn,
+  .account-nav-item,
+  .filter-chip,
+  .price-radio,
+  .banner-cta,
+  .icon-btn,
+  .copy-btn,
+  .qty-btn,
+  .password-toggle-btn,
+  .lookup-filter-pill,
+  .link-btn,
+  .sort-select,
+  .header-filter-btn,
+  .header-avatar-btn {
+    min-height: 44px;
+  }
+
+  .btn,
+  .icon-btn,
+  .copy-btn,
+  .qty-btn,
+  .mobile-nav-btn,
+  .header-filter-btn,
+  .header-avatar-btn,
+  .password-toggle-btn,
+  .link-btn {
+    min-width: 44px;
+  }
+
+  .header-avatar-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .link-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* 3. Khung nhìn Mobile (< 768px): Header 1 tầng, Compact Card, Order Cards, Sticky CTA */
 @media (max-width: 767px) {
   body {
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
@@ -51,12 +119,11 @@
     display: none;
   }
 
-  /* Lưới sản phẩm 2 cột tối ưu mật độ trên màn hình >= 360px */
-  @media (min-width: 360px) {
-    .product-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
+  .detail-breadcrumb {
+    flex-wrap: wrap;
+    white-space: normal;
+    overflow-x: visible;
+    row-gap: 0.2rem;
   }
 
   .product-card {
@@ -81,8 +148,7 @@
   }
 
   .card-desc,
-  .card-specs,
-  .btn-detail {
+  .card-specs {
     display: none;
   }
 
@@ -91,16 +157,18 @@
   }
 
   .card-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr auto;
+    gap: 0.4rem;
   }
 
-  .card-actions .btn-buy-now {
+  .card-actions .btn-buy-now,
+  .card-actions .btn-detail {
     min-height: 44px;
-    padding: 0.45rem 0.6rem;
+    padding: 0.45rem 0.65rem;
     font-size: 0.8125rem;
   }
 
-  /* 3. Compact Card 3 hàng cho Lịch sử đơn hàng (#view-account) */
+  /* Compact Card cho Lịch sử đơn hàng (#view-account) */
   .acc-order-table thead {
     display: none;
   }
@@ -127,9 +195,24 @@
     background: var(--color-bg);
   }
 
+  .acc-order-table tr.acc-empty-row,
+  .acc-order-table tr:has(> td.empty-state) {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
   .acc-order-table td {
+    min-width: 0;
     padding: 0;
     font-size: 0.78125rem;
+  }
+
+  .acc-order-table td.empty-state {
+    display: flex;
+    width: 100%;
+    padding: 1.5rem 1rem;
   }
 
   .acc-order-table td:nth-child(1) {
@@ -146,12 +229,32 @@
 
   .acc-row-actions .btn-detail {
     display: inline-flex;
-    min-height: 2.25rem;
-    padding: 0.3rem 0.65rem;
-    font-size: 0.75rem;
+    min-height: 44px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
   }
 
-  /* 4. Sticky CTA Bar cho Trang Chi Tiết (#view-product-detail) */
+  /* Admin mobile cards */
+  .admin-stock-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-stock-row > div {
+    min-width: 0;
+  }
+
+  .admin-stock-controls {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .admin-stock-input {
+    min-height: 44px;
+  }
+
+  /* Sticky CTA Bar cho Trang Chi Tiết (#view-product-detail) */
   #view-product-detail {
     padding-bottom: 4.5rem;
   }
@@ -200,11 +303,12 @@
     font-size: 0.875rem;
   }
 
-  /* 5. Đẩy nút Floating Zalo lên trên Bottom Nav & Sticky CTA Bar trên Mobile */
+  /* Đẩy nút Floating Zalo & Telegram lên trên Bottom Nav & Sticky CTA Bar trên Mobile */
   .floating-zalo-btn {
     right: 16px;
     bottom: calc(74px + env(safe-area-inset-bottom));
   }
+
   .floating-telegram-btn {
     right: 16px;
     bottom: calc(134px + env(safe-area-inset-bottom));
@@ -214,24 +318,130 @@
   body:has(#view-product-detail:not([hidden])) .floating-zalo-btn {
     bottom: calc(132px + env(safe-area-inset-bottom));
   }
+
   body.is-detail-view .floating-telegram-btn,
   body:has(#view-product-detail:not([hidden])) .floating-telegram-btn {
     bottom: calc(192px + env(safe-area-inset-bottom));
   }
 }
 
-/* Tablet & Desktop (>= 768px) */
+/* 4. Small Mobile (< 540px): 1 cột product grid & 2 cột variant cards */
+@media (max-width: 539px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .duration-options,
+  .account-type-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+}
+
+/* 5. Extra Small Mobile (< 480px): Header 1 dòng gọn, QR Modal vừa 1 viewport, Stats 1 cột */
+@media (max-width: 479px) {
+  .header-inner {
+    gap: 0.375rem;
+  }
+
+  .wordmark {
+    font-size: 1.0625rem;
+  }
+
+  .header-search {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .header-actions {
+    flex-shrink: 0;
+  }
+
+  .header-filter-btn {
+    white-space: nowrap;
+    padding-inline: 0.55rem;
+  }
+
+  .modal-header {
+    padding: 0.7rem 1rem;
+  }
+
+  .modal-body {
+    padding: 0.85rem 1rem 1rem;
+  }
+
+  #checkout-qr-step {
+    gap: 0.5rem;
+  }
+
+  .qr-order-banner {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .qr-layout {
+    gap: 0.5rem;
+  }
+
+  .qr-image-box {
+    padding: 0.5rem;
+  }
+
+  .qr-image-box img {
+    max-height: 22dvh;
+    max-width: 145px;
+    width: auto;
+    height: auto;
+  }
+
+  .qr-caption {
+    margin-top: 0.35rem;
+  }
+
+  .copy-row {
+    padding: 0.45rem 0.6rem;
+  }
+
+  #checkout-qr-step > .btn {
+    width: 100%;
+    margin-bottom: 0 !important;
+    min-height: 44px;
+  }
+
+  .stat-grid,
+  .price-filter-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 6. Phablet / Small Tablet (>= 540px): 2 cột product grid & responsive variants */
+@media (min-width: 540px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.875rem;
+  }
+
+  .duration-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .account-type-options {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+/* 7. Tablet & Desktop (>= 768px) */
 @media (min-width: 768px) {
   body { padding-bottom: 0; }
   .container { padding-inline: 1.5rem; }
   .header-filter-btn, .mobile-bottom-nav, .modal-drag-handle { display: none; }
   .main-nav, .home-sidebar { display: flex; }
+  .nav-link { white-space: nowrap; }
   .toolbar-top { flex-direction: row; align-items: center; justify-content: space-between; }
   .banner-emblem { display: grid; }
-  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
   .hero-card { grid-template-columns: 5fr 7fr; padding: 1.5rem; gap: 1.75rem; }
   .hero-title { font-size: 1.875rem; }
-  .account-type-options, .admin-layout, .form-row { grid-template-columns: repeat(2, 1fr); }
+  .admin-layout, .form-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .info-cards-grid { grid-template-columns: repeat(3, 1fr); }
   .welcome-card, .support-banner-card { flex-direction: row; align-items: center; }
   .footer-inner { flex-direction: row; justify-content: space-between; text-align: left; }
@@ -248,12 +458,44 @@
   .acc-order-table td { padding: 0.85rem; vertical-align: middle; }
 }
 
+/* 8. Tablet Navbar Collapse Prevention (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .nav-link {
+    white-space: nowrap;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.8125rem;
+  }
+
+  .header-search {
+    min-width: 8rem;
+    flex: 1;
+  }
+
+  .main-nav,
+  .header-actions {
+    flex-shrink: 0;
+  }
+}
+
+/* 9. Sidebar Layout (>= 1024px) */
 @media (min-width: 1024px) {
   .home-layout { display: grid; grid-template-columns: 17.5rem 1fr; align-items: start; gap: 1.5rem; }
   .category-list { flex-direction: column; overflow-x: visible; }
   .filter-chip { width: 100%; border-radius: var(--radius-sm); background: transparent; border-color: transparent; text-align: left; }
   .price-filter-list { grid-template-columns: 1fr; }
   .sidebar-trust-card { display: block; }
-  .product-grid { grid-template-columns: repeat(3, 1fr); }
   .account-layout { display: grid; grid-template-columns: 18rem 1fr; align-items: start; gap: 1.5rem; }
+}
+
+/* 10. Desktop Product Grid (> 1024px & >= 1440px) */
+@media (min-width: 1025px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1440px) {
+  .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }

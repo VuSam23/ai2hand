@@ -9,6 +9,7 @@ import {
   fetchProducts,
   fetchOwnOrderByCode,
   pollOrderStatus,
+  stopOrderPolling,
 } from '../services/supabaseApi.js';
 import { showToast, copyText, downloadTextFile } from './uiCommon.js';
 import {
@@ -39,7 +40,13 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
   document.getElementById('modal-close-btn')?.addEventListener('click', closeCheckoutModal);
   document.getElementById('success-done-btn')?.addEventListener('click', closeCheckoutModal);
   document.getElementById('checkout-modal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'checkout-modal') closeCheckoutModal();
+    const isQrStep = document.getElementById('checkout-qr-step')?.hidden === false;
+    if (e.target.id === 'checkout-modal' && !isQrStep) closeCheckoutModal();
+  });
+  document.getElementById('qr-recreate-btn')?.addEventListener('click', () => {
+    stopOrderPolling();
+    state.pendingOrder = null;
+    switchModalStep('form');
   });
 
   const qrImg = document.getElementById('vietqr-img');

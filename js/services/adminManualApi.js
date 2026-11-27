@@ -41,3 +41,15 @@ export function adminCompleteManualOrder(orderCode, credential) {
 export function adminUpdateWarranty(productId, warranty) {
   return callManualAdmin('update_warranty', { productId, warranty });
 }
+
+export function adminUpdateProduct(productId, payload) {
+  return callManualAdmin('update_product', { productId, ...payload });
+}
+
+export function adminListKeys(productId = '') {
+  return callManualAdmin('list_keys', { productId });
+}
+
+export function adminDeleteKey(id) {
+  return callManualAdmin('delete_key', { id });
+}

@@ -210,6 +210,7 @@ function startQrCountdown(seconds = 900) {
   const el = document.getElementById('qr-countdown');
   const paidBtn = document.getElementById('simulate-paid-btn');
   const checkBtn = document.getElementById('check-order-status-btn');
+  const recreateBtn = document.getElementById('qr-recreate-btn');
   if (!el) return;
 
   const isLive = isSupabaseConfigured();
@@ -222,12 +223,11 @@ function startQrCountdown(seconds = 900) {
     checkBtn.hidden = !isLive;
     checkBtn.disabled = false;
   }
+  if (recreateBtn) recreateBtn.hidden = true;
 
   let remaining = seconds;
   const renderTick = () => {
-    const m = String(Math.floor(remaining / 60)).padStart(2, '0');
-    const s = String(remaining % 60).padStart(2, '0');
-    el.textContent = `${m}:${s}`;
+    el.textContent = `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`;
   };
   renderTick();
 
@@ -238,11 +238,9 @@ function startQrCountdown(seconds = 900) {
       clearInterval(qrTimerInterval);
       qrTimerInterval = null;
       stopOrderPolling();
-      if (paidBtn) {
-        paidBtn.disabled = true;
-        paidBtn.querySelector('span').textContent = 'Phiên QR đã hết hạn (Tạo lại đơn)';
-      }
-      showToast('Mã VietQR đã hết thời gian giữ đơn (15 phút).', 'error');
+      if (paidBtn) paidBtn.disabled = true;
+      if (recreateBtn) recreateBtn.hidden = false;
+      showToast('Mã VietQR đã hết thời gian giữ đơn (15 phút). Bấm "Tạo lại đơn mới".', 'error');
     }
   }, 1000);
 }

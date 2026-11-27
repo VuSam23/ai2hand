@@ -92,14 +92,16 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
   const base1M =
     Number(product.variantPrices?.[`1 Tháng|${activeType.label}`]) ||
     Math.round((product.price * typeMult) / 1000) * 1000;
+  const durStockOf = (lbl) => ACCOUNT_TYPES.reduce((s, t) => s + getVariantStock(product, lbl, t.label), 0);
   const variants = isLifetime
     ? [
         {
           label: product.duration,
+          multiplier: 1,
           price: Math.round((product.price * typeMult) / 1000) * 1000,
           strike: 0,
           stock: getVariantStock(product, product.duration, activeType.label),
-          anyStock: ACCOUNT_TYPES.some((t) => getVariantStock(product, product.duration, t.label) > 0),
+          durStock: durStockOf(product.duration),
         },
       ]
     : DURATION_VARIANTS.map((v) => {
@@ -107,19 +109,16 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
         const fallbackType = ACCOUNT_TYPES.find((t) => getVariantStock(product, v.label, t.label) > 0);
         const altPrice = fallbackType ? Number(product.variantPrices?.[`${v.label}|${fallbackType.label}`]) : 0;
         const price =
-          customPrice >= 1000
-            ? customPrice
-            : altPrice >= 1000
-              ? altPrice
-              : Math.round((product.price * v.multiplier * typeMult) / 1000) * 1000;
+          customPrice >= 1000 ? customPrice : altPrice >= 1000 ? altPrice : Math.round((product.price * v.multiplier * typeMult) / 1000) * 1000;
         const months = Math.max(1, Number.parseInt(v.label, 10) || 1);
         const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
         return {
           label: v.label,
+          multiplier: v.multiplier,
           price,
           strike,
           stock: getVariantStock(product, v.label, activeType.label),
-          anyStock: Boolean(fallbackType),
+          durStock: durStockOf(v.label),
         };
       });
 
@@ -165,39 +164,32 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
 
   const durationWrap = document.getElementById('detail-duration-options');
   if (durationWrap) {
-    const availDurations = variants
-      .map((v, idx) => ({ ...v, idx }))
-      .filter((v) => v.anyStock);
-    durationWrap.innerHTML =
-      availDurations.length > 0
-        ? availDurations
-            .map(
-              (v) => `
+    const availDurations = variants.map((v, idx) => ({ ...v, idx })).filter((v) => v.durStock > 0);
+    durationWrap.innerHTML = availDurations.length > 0
+      ? availDurations.map((v) => `
         <button type="button" class="duration-btn ${v.idx === activeIdx ? 'is-active' : ''}" data-variant-index="${v.idx}">
           <strong>${escapeHtml(v.label)}</strong>
-          <span>${formatVnd(v.price)}</span>
-        </button>`
-            )
-            .join('')
-        : '<span class="section-subtitle">Sản phẩm tạm hết hàng</span>';
+          <span>${v.price >= 1000 ? formatVnd(v.price) : 'Chưa mở bán'} • Còn ${v.durStock}</span>
+        </button>`).join('')
+      : '<span class="section-subtitle">Sản phẩm tạm hết hàng</span>';
   }
 
   const typeWrap = document.getElementById('detail-account-types');
   if (typeWrap) {
     const availTypes = ACCOUNT_TYPES.filter((t) => getVariantStock(product, currentVariant.label, t.label) > 0);
-    typeWrap.innerHTML =
-      availTypes.length > 0
-        ? availTypes
-            .map((t) => {
-              const tStock = getVariantStock(product, currentVariant.label, t.label);
-              return `
+    typeWrap.innerHTML = availTypes.length > 0
+      ? availTypes.map((t) => {
+          const tStock = getVariantStock(product, currentVariant.label, t.label);
+          const customT = Number(product.variantPrices?.[`${currentVariant.label}|${t.label}`]);
+          const tPrice = customT >= 1000 ? customT : Math.round((product.price * (currentVariant.multiplier || 1) * (Number(t.multiplier) || 1)) / 1000) * 1000;
+          return `
         <button type="button" class="account-type-btn ${t.id === activeType.id ? 'is-active' : ''}" data-type-id="${escapeHtml(t.id)}">
           <strong>${escapeHtml(t.label)}</strong>
-          <span>${escapeHtml(`${t.desc} • SL: ${tStock}`)}</span>
+          <span>${tPrice >= 1000 ? formatVnd(tPrice) : 'Chưa mở bán'} • SL: ${tStock}</span>
+          <span>${escapeHtml(t.desc)}</span>
         </button>`;
-            })
-            .join('')
-        : '<span class="section-subtitle">Sản phẩm tạm hết hàng</span>';
+        }).join('')
+      : '<span class="section-subtitle">Sản phẩm tạm hết hàng</span>';
   }
 
   const stockEl = document.getElementById('hero-stock');

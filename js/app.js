@@ -1,12 +1,6 @@
 import { fetchProducts, lookupOrders, getUserProfile } from './services/supabaseApi.js';
 import { captureTrafficSource } from './services/trafficSource.js';
-import {
-  adminListOrders,
-  adminListPromos,
-  getAdminSession,
-  isUserLoggedIn,
-  isAdminLoggedIn,
-} from './services/adminApi.js';
+import { adminListOrders, adminListPromos, getAdminSession, isUserLoggedIn, isAdminLoggedIn } from './services/adminApi.js';
 import { showToast } from './ui/uiCommon.js';
 import { renderCategories, renderProductDetail, renderProductGrid, getCheapestVariant } from './ui/uiStore.js';
 import { openCheckoutModal, closeCheckoutModal, bindCheckoutEvents, handlePaymentReturnUrl } from './ui/uiCheckout.js';
@@ -15,7 +9,7 @@ import {
   renderAccountView,
 } from './ui/uiAccount.js';
 import { renderAdminView, bindAdminEvents } from './ui/uiAdmin.js';
-import { bindAccountAndAdminEvents } from './ui/handlersAccount.js';
+import { bindAccountAndAdminEvents, handlePasswordRecoveryHash } from './ui/handlersAccount.js';
 
 const state = {
   products: [],
@@ -169,7 +163,7 @@ function bindEvents() {
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeCheckoutModal();
+    if (e.key === 'Escape' && document.getElementById('checkout-qr-step')?.hidden !== false) closeCheckoutModal();
   });
 
   document.getElementById('back-to-home-btn')?.addEventListener('click', () => {
@@ -290,6 +284,7 @@ async function initApp() {
       switchView(hash);
     }
     await handlePaymentReturnUrl({ switchView, refreshAccountData });
+    handlePasswordRecoveryHash();
   } catch {
     showToast('Không thể tải dữ liệu cửa hàng.', 'error');
   }

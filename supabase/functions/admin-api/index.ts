@@ -248,7 +248,7 @@ serve(async (req) => {
     }
 
     if (action === "list_orders") {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*&order=created_at.desc&limit=200`, {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*&order=created_at.desc&limit=500`, {
         headers: svcHeaders,
       });
       if (!res.ok) return jsonRes({ ok: false, error: await res.text() }, 400);

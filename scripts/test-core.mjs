@@ -20,6 +20,9 @@ globalThis.localStorage = memStore();
 const { SUPABASE_CONFIG } = await import('../js/config/config.js');
 const adminApi = await import('../js/services/adminApi.js');
 const supabaseApi = await import('../js/services/supabaseApi.js');
+const mappers = await import('../js/services/supabaseMappers.js');
+const promoApi = await import('../js/services/promoApi.js');
+const uiStore = await import('../js/ui/uiStore.js');
 
 test('1. RBAC: isAdminLoggedIn() chi true voi admin@gmail.com va false voi khach/demo', async () => {
   adminApi.adminLogout();
@@ -120,4 +123,31 @@ test('4. Timeout mang (AbortController) huy request khi fetch treo', async () =>
   await assert.rejects(() => globalThis.fetch('https://example.com', { signal: controller.signal }), {
     name: 'AbortError',
   });
+});
+
+test('5. Bien the ton kho, Cap thu cong, Promo va Cheapest Variant', () => {
+  const prod = {
+    id: 'claude-pro',
+    name: 'Claude Pro',
+    price: 60000,
+    isActive: true,
+    stock: 6,
+    variantStocks: { '1 Tháng|TK cấp sẵn': 2 },
+    manualStocks: { '3 Tháng|Nâng cấp chính chủ': 4 },
+    variantPrices: { '1 Tháng|TK cấp sẵn': 89000, '3 Tháng|Nâng cấp chính chủ': 210000, '6 Tháng|Dùng chung': 120000 },
+  };
+  assert.equal(mappers.getVariantStock(prod, '1 Tháng', 'TK cấp sẵn'), 2);
+  assert.equal(mappers.getVariantStock(prod, '3 Tháng', 'Nâng cấp chính chủ'), 4);
+  assert.equal(mappers.getVariantStock(prod, '6 Tháng', 'Dùng chung'), 0);
+  assert.equal(mappers.isVariantManual(prod, '3 Tháng', 'Nâng cấp chính chủ'), true);
+  assert.equal(mappers.isVariantManual(prod, '1 Tháng', 'TK cấp sẵn'), false);
+
+  const cheapest = uiStore.getCheapestVariant(prod);
+  assert.equal(cheapest.label, '1 Tháng');
+  assert.equal(cheapest.accountType, 'TK cấp sẵn');
+  assert.equal(cheapest.price, 89000);
+  assert.equal(cheapest.stock, 2);
+
+  assert.equal(promoApi.calculatePromoDiscount({ discountType: 'percent', discountValue: 20 }, 100000), 20000);
+  assert.equal(promoApi.calculatePromoDiscount({ discountType: 'fixed', discountValue: 150000 }, 100000), 100000);
 });

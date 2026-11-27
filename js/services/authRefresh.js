@@ -8,7 +8,7 @@ let refreshPromise = null;
 
 export function readSession() {
   try {
-    const raw = sessionStorage.getItem(AUTH_SESSION_KEY);
+    const raw = localStorage.getItem(AUTH_SESSION_KEY);
     const parsed = raw ? JSON.parse(raw) : null;
     return parsed?.email ? parsed : null;
   } catch {
@@ -18,9 +18,9 @@ export function readSession() {
 
 export function saveSession(session) {
   try {
-    sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
   } catch {
-    // Bỏ qua nếu trình duyệt chặn sessionStorage
+    // Bỏ qua nếu trình duyệt chặn localStorage
   }
   return session;
 }
