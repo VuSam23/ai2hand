@@ -48,7 +48,7 @@ export const ACCOUNT_TYPES = [
     id: 'shared',
     label: 'Dùng chung',
     multiplier: 0.65,
-    desc: 'Tiết kiệm chi phí • Bảo hành trọn kỳ',
+    desc: 'Khách nhập Gmail cá nhân để hệ thống add vào nhóm Family • Tiết kiệm chi phí, bảo hành trọn kỳ',
   },
   {
     id: 'upgrade',

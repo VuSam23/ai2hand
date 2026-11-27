@@ -914,7 +914,11 @@
                     <input id="admin-import-price" type="number" min="1000" step="1000" class="form-input" placeholder="Ví dụ: 60000" />
                   </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="admin-import-manual-qty-group" hidden>
+                  <label for="admin-import-manual-qty">Số lượng suất mở bán (Dùng chung Add Family / Chính chủ — không cần nhập user|pass)</label>
+                  <input id="admin-import-manual-qty" type="number" min="0" step="1" class="form-input" value="10" placeholder="Ví dụ: 10" />
+                </div>
+                <div class="form-group" id="admin-import-lines-group">
                   <label for="admin-import-lines">Danh sách <code>user|pass</code> (mỗi dòng 1 tài khoản)</label>
                   <textarea
                     id="admin-import-lines"
@@ -1101,7 +1105,7 @@
           </div>
 
           <div class="form-group">
-            <label for="checkout-contact">Email hoặc SĐT Zalo nhận hàng <span class="text-error">*</span></label>
+            <label for="checkout-contact"><span id="checkout-contact-label-text">Email hoặc SĐT Zalo nhận hàng</span> <span class="text-error">*</span></label>
             <input
               id="checkout-contact"
               type="text"

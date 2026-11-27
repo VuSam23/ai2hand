@@ -27,10 +27,21 @@ export function syncImportPriceInput(products = []) {
   const dur = (document.getElementById('admin-import-duration')?.value || '').replace(/\|/g, '-').trim() || '1 Tháng';
   const type = document.getElementById('admin-import-type')?.value || 'TK cấp sẵn';
   const priceEl = document.getElementById('admin-import-price');
-  if (!priceEl) return;
   const prod = products.find((p) => p.id === pid);
-  const vPrice = Number(prod?.variantPrices?.[`${dur}|${type}`] || 0);
-  priceEl.value = vPrice >= 1000 ? String(vPrice) : '';
+  if (priceEl) {
+    const vPrice = Number(prod?.variantPrices?.[`${dur}|${type}`] || 0);
+    priceEl.value = vPrice >= 1000 ? String(vPrice) : '';
+  }
+  const isNoCredType = type === 'Dùng chung' || type === 'Nâng cấp chính chủ';
+  const linesGroup = document.getElementById('admin-import-lines-group');
+  const qtyGroup = document.getElementById('admin-import-manual-qty-group');
+  const qtyInput = document.getElementById('admin-import-manual-qty');
+  if (linesGroup) linesGroup.hidden = isNoCredType;
+  if (qtyGroup) qtyGroup.hidden = !isNoCredType;
+  if (isNoCredType && qtyInput) {
+    const curManual = Number(prod?.manualStocks?.[`${dur}|${type}`] ?? 10);
+    qtyInput.value = String(curManual > 0 ? curManual : 10);
+  }
 }
 
 export function renderAdminOrders(orders = null) {

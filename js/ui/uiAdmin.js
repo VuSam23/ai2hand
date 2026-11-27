@@ -3,6 +3,7 @@
  */
 import { fetchProducts } from '../services/supabaseApi.js';
 import { uploadProductIcon } from '../services/imageUpload.js';
+import { adminUpdateManualStock } from '../services/adminManualApi.js';
 import {
   adminAddProduct,
   adminUpdateVariantPrice,
@@ -113,6 +114,16 @@ export function bindAdminEvents({ state, refreshCatalogUi, refreshAccountData })
       const duration = (document.getElementById('admin-import-duration')?.value || '').replace(/\|/g, '-').trim() || '1 Tháng';
       const accountType = document.getElementById('admin-import-type')?.value || 'TK cấp sẵn';
       const variantPrice = Math.round(Number(document.getElementById('admin-import-price')?.value) || 0);
+      if (accountType === 'Dùng chung' || accountType === 'Nâng cấp chính chủ') {
+        const manualQty = Math.max(0, Number.parseInt(document.getElementById('admin-import-manual-qty')?.value, 10) || 0);
+        await adminUpdateManualStock(productId, `${duration}|${accountType}`, manualQty, variantPrice);
+        state.products = await fetchProducts();
+        refreshCatalogUi();
+        if (selectEl) selectEl.value = productId;
+        syncImportPriceInput(state.products);
+        showToast(`Đã lưu ${manualQty} suất mở bán (${duration} • ${accountType}) — khách tự nhập Gmail, không cần nạp user|pass!`, 'success');
+        return;
+      }
       const res = await adminImportCredentials(
         productId,
         document.getElementById('admin-import-lines').value,

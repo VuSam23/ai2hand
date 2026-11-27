@@ -96,14 +96,21 @@ serve(async (req) => {
       }
       const newlyMarked = await manualRes.json().catch(() => false);
       if (newlyMarked === true) {
+        const isShared = String(order.account_type || "").toLowerCase().includes("dùng chung");
+        const headerTitle = isShared
+          ? "[ĐƠN DÙNG CHUNG (ADD FAMILY) - ĐÃ THANH TOÁN]"
+          : "[ĐƠN CẤP THỦ CÔNG - ĐÃ THANH TOÁN]";
+        const contactLine = isShared
+          ? `Gmail khách cần add vào Family: ${order.contact || "Không rõ"}`
+          : `Email / Zalo khách nhận: ${order.contact || "Không rõ"}`;
         await sendTelegramAlert(
-          `[ĐƠN CẤP THỦ CÔNG - ĐÃ THANH TOÁN]\n` +
+          `${headerTitle}\n` +
             `Mã đơn: #${order.order_code}\n` +
             `Sản phẩm: ${order.product_name || order.product_id}\n` +
             `Biến thể: ${order.duration || "1 Tháng"} • ${order.account_type || "TK cấp sẵn"} (x${order.quantity || 1})\n` +
             `Đã nhận: ${formatVnd(amount)}\n` +
             `Nguồn: ${order.traffic_source || "Direct"}\n` +
-            `Email / Zalo khách nhận: ${order.contact || "Không rõ"}`
+            contactLine
         );
       }
       return jsonRes({ success: true, status: "pending_manual", orderCode: order.order_code }, 200);

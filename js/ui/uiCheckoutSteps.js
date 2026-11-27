@@ -63,11 +63,27 @@ export function syncCheckoutVariantUi(state, variantObj) {
     variantObj.price >= 1000 ? formatVnd(variantObj.price) : 'Chưa đặt giá';
 
   const deliveryNote = document.getElementById('checkout-delivery-note');
-  const showManualNote = variantObj.isManual || variantObj.accountType === 'Nâng cấp chính chủ';
-  const showPrebuiltNote = !showManualNote && variantObj.accountType === 'TK cấp sẵn';
+  const contactLabel = document.getElementById('checkout-contact-label-text');
+  const contactInput = document.getElementById('checkout-contact');
+  const isSharedFamily = variantObj.accountType === 'Dùng chung';
+  const isUpgradeOwner = !isSharedFamily && (variantObj.isManual || variantObj.accountType === 'Nâng cấp chính chủ');
+  const showPrebuiltNote = !isSharedFamily && !isUpgradeOwner && variantObj.accountType === 'TK cấp sẵn';
+  if (contactLabel) {
+    contactLabel.textContent = isSharedFamily
+      ? 'Nhập địa chỉ Gmail cần thêm vào nhóm Family'
+      : isUpgradeOwner
+        ? 'Email tài khoản cần nâng cấp hoặc SĐT Zalo'
+        : 'Email hoặc SĐT Zalo nhận hàng';
+  }
+  if (contactInput) {
+    contactInput.placeholder = isSharedFamily
+      ? 'Ví dụ: ten_cua_ban@gmail.com (Bắt buộc nhập đúng Gmail)'
+      : 'Ví dụ: khachhang@gmail.com hoặc 0912345678';
+  }
   if (deliveryNote) {
-    deliveryNote.hidden = !showManualNote && !showPrebuiltNote;
-    if (showManualNote) deliveryNote.textContent = 'Với gói nâng cấp thủ công, sau khi thanh toán thành công quý khách vui lòng liên hệ Admin (Zalo / Telegram) kèm mã đơn để được hỗ trợ kích hoạt nhanh nhất.';
+    deliveryNote.hidden = !isSharedFamily && !isUpgradeOwner && !showPrebuiltNote;
+    if (isSharedFamily) deliveryNote.textContent = 'Với gói Dùng chung (Add Family), bạn chỉ cần nhập địa chỉ Gmail của bạn ở trên. Ngay sau khi thanh toán, hệ thống sẽ thêm Gmail của bạn vào nhóm Family để kích hoạt gói cước.';
+    else if (isUpgradeOwner) deliveryNote.textContent = 'Với gói nâng cấp thủ công, sau khi thanh toán thành công quý khách vui lòng liên hệ Admin (Zalo / Telegram) kèm mã đơn để được hỗ trợ kích hoạt nhanh nhất.';
     else if (showPrebuiltNote) deliveryNote.textContent = 'Email + Password cấp sẵn kèm gói cước. Lưu ý đối với Gmail chỉ hỗ trợ get OTP đăng nhập tối đa 2 lần, trường hợp 2 lần trở lên sẽ tính phí 7.000đ/1 lượt.';
   }
 
@@ -205,32 +221,18 @@ function startQrCountdown(seconds = 900) {
   const checkBtn = document.getElementById('check-order-status-btn');
   const recreateBtn = document.getElementById('qr-recreate-btn');
   if (!el) return;
-
   const isLive = isSupabaseConfigured();
-  if (paidBtn) {
-    paidBtn.hidden = isLive;
-    paidBtn.disabled = isLive;
-    paidBtn.querySelector('span').textContent = 'Giả lập đã thanh toán (Test)';
-  }
-  if (checkBtn) {
-    checkBtn.hidden = !isLive;
-    checkBtn.disabled = false;
-  }
+  if (paidBtn) { paidBtn.hidden = isLive; paidBtn.disabled = isLive; paidBtn.querySelector('span').textContent = 'Giả lập đã thanh toán (Test)'; }
+  if (checkBtn) { checkBtn.hidden = !isLive; checkBtn.disabled = false; }
   if (recreateBtn) recreateBtn.hidden = true;
-
   let remaining = seconds;
-  const renderTick = () => {
-    el.textContent = `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`;
-  };
+  const renderTick = () => { el.textContent = `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`; };
   renderTick();
-
   qrTimerInterval = setInterval(() => {
     remaining = Math.max(0, remaining - 1);
     renderTick();
     if (remaining === 0) {
-      clearInterval(qrTimerInterval);
-      qrTimerInterval = null;
-      stopOrderPolling();
+      clearInterval(qrTimerInterval); qrTimerInterval = null; stopOrderPolling();
       if (paidBtn) paidBtn.disabled = true;
       if (recreateBtn) recreateBtn.hidden = false;
       showToast('Mã VietQR đã hết thời gian giữ đơn (15 phút). Bấm "Tạo lại đơn mới".', 'error');

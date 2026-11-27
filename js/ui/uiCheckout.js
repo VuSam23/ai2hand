@@ -159,7 +159,13 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
     const contactInput = document.getElementById('checkout-contact');
     const errorEl = document.getElementById('checkout-contact-error');
     const contact = contactInput.value.trim();
+    const isSharedFamily = state.checkoutVariant?.accountType === 'Dùng chung';
 
+    if (isSharedFamily && !CONTACT_REGEX.EMAIL.test(contact)) {
+      errorEl.textContent = 'Với gói Dùng chung, vui lòng nhập đúng địa chỉ Email / Gmail cần thêm vào nhóm Family.';
+      errorEl.hidden = false;
+      return showToast('Vui lòng nhập địa chỉ Gmail hợp lệ để thêm vào Family.', 'error');
+    }
     if (!CONTACT_REGEX.EMAIL.test(contact) && !CONTACT_REGEX.VN_PHONE.test(contact)) {
       errorEl.textContent = 'Vui lòng nhập Email hợp lệ hoặc SĐT Zalo Việt Nam (10 số).';
       errorEl.hidden = false;

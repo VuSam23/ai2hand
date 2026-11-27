@@ -97,11 +97,11 @@ serve(async (req) => {
 
     const manualMap = product.manual_stocks && typeof product.manual_stocks === "object" ? product.manual_stocks : {};
     const manualStock = Math.max(0, Math.round(Number(manualMap[variantKey]) || 0));
-    const isManual = manualStock > 0;
+    const isManual = manualStock > 0 || accountType === "Dùng chung" || accountType === "Nâng cấp chính chủ";
 
-    if (isManual) {
+    if (manualStock > 0) {
       if (manualStock < qty) {
-        return jsonRes({ ok: false, error: `Số lượng vượt quá suất cấp thủ công (${manualStock}).` }, 400);
+        return jsonRes({ ok: false, error: `Số lượng vượt quá suất mở bán (${manualStock}).` }, 400);
       }
     } else {
       const keyRes = await fetch(

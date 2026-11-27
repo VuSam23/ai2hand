@@ -63,7 +63,6 @@ export function renderPrebuiltAccountGuideHtml({ compact = false, durationLabel 
         <h4>3️⃣ Lưu ý cấm &amp; 🛡️ Chính sách bảo hành (Từ chối bảo hành nếu vi phạm)</h4>
         <ul class="prebuilt-list">
           <li><strong>Không đụng vào phần Thanh toán (<code>pay.google.com</code>):</strong> Tuyệt đối không xóa phương thức thanh toán, đóng hồ sơ hoặc đổi quốc gia để tránh mất gói Gemini.</li>
-          <li><strong>Không tự ý rời hoặc thêm người vào Google Family Group</strong> (nếu tài khoản thuộc gói share Family).</li>
           <li><strong>Không cắm tool / API tự động:</strong> Chỉ sử dụng trực tiếp trên web hoặc app chính thức (<code>gemini.google.com</code>).</li>
           <li>Không lưu trữ dữ liệu/tài liệu cá nhân quan trọng lên Google Drive của tài khoản này (shop không chịu trách nhiệm sao lưu dữ liệu).</li>
           <li><strong>Phạm vi &amp; Hình thức bảo hành:</strong> Bảo hành đăng nhập lần đầu và lỗi gói cước trong vòng <strong>${warrantyScope}</strong> kể từ lúc bàn giao. Đổi tài khoản mới tương đương hoặc hoàn tiền theo thời gian chưa sử dụng; từ chối bảo hành nếu khóa do vi phạm các lưu ý trên.</li>
