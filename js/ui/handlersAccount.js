@@ -3,6 +3,7 @@ import { getUserProfile, updateUserProfile } from '../services/supabaseApi.js';
 import { adminLogin, adminLogout, userSignUp, userResetPassword, updateAuthPassword } from '../services/adminApi.js';
 import { showToast, copyText } from './uiCommon.js';
 import { syncAuthNavUi, renderAccountView } from './uiAccount.js';
+import { openPrebuiltGuideModal } from './uiPrebuiltGuide.js';
 import { switchAdminTab } from './uiAdminRender.js';
 
 export function bindAccountAndAdminEvents({ state, startCheckout, openProductDetail, switchView }) {
@@ -70,7 +71,8 @@ export function bindAccountAndAdminEvents({ state, startCheckout, openProductDet
   document.getElementById('account-orders-tbody')?.addEventListener('click', async (e) => {
     const copyBtn = e.target.closest('[data-copy-raw]');
     if (copyBtn) return copyText(copyBtn.dataset.copyRaw, 'tài khoản', copyBtn);
-
+    const guideBtn = e.target.closest('[data-action="open-prebuilt-guide"]');
+    if (guideBtn) return openPrebuiltGuideModal(guideBtn.dataset.duration || '');
     const buyAgainBtn = e.target.closest('[data-action="buy-again"]');
     if (buyAgainBtn) {
       const target = state.products.find((p) => p.id === buyAgainBtn.dataset.productId);
@@ -225,21 +227,13 @@ export function bindAccountAndAdminEvents({ state, startCheckout, openProductDet
     e.currentTarget.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
   });
 
-  document.getElementById('auth-toggle-mode-btn')?.addEventListener('click', () => {
-    setAuthMode(authMode === 'login' ? 'signup' : 'login');
-  });
-
+  document.getElementById('auth-toggle-mode-btn')?.addEventListener('click', () => setAuthMode(authMode === 'login' ? 'signup' : 'login'));
   document.getElementById('auth-forgot-btn')?.addEventListener('click', async (e) => {
     const btn = e.currentTarget;
     btn.disabled = true;
-    try {
-      const msg = await userResetPassword(document.getElementById('admin-auth-email')?.value || '');
-      showToast(msg, 'info');
-    } catch (err) {
-      showToast(err.message, 'error');
-    } finally {
-      btn.disabled = false;
-    }
+    try { showToast(await userResetPassword(document.getElementById('admin-auth-email')?.value || ''), 'info'); }
+    catch (err) { showToast(err.message, 'error'); }
+    finally { btn.disabled = false; }
   });
 
   document.getElementById('admin-logout-btn')?.addEventListener('click', handleLogout);

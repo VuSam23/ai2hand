@@ -12,6 +12,7 @@ import {
   stopOrderPolling,
 } from '../services/supabaseApi.js';
 import { showToast, copyText, downloadTextFile } from './uiCommon.js';
+import { openPrebuiltGuideModal } from './uiPrebuiltGuide.js';
 import {
   calculateCheckoutTotal,
   updateCheckoutPriceUi,
@@ -244,6 +245,11 @@ export function bindCheckoutEvents({ state, refreshCatalogUi, refreshAccountData
     const code = document.getElementById('delivered-order-code')?.textContent || 'ACC';
     const text = document.getElementById('delivered-credentials')?.textContent || '';
     if (text) downloadTextFile(`${code}-accounts.txt`, text);
+  });
+
+  document.getElementById('delivered-prebuilt-guide')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action="open-prebuilt-guide"]');
+    if (btn) openPrebuiltGuideModal(btn.dataset.duration || '');
   });
 }
 
