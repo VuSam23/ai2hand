@@ -26,6 +26,20 @@ async function verifyAdminUser(authHeader: string) {
   return { status: 200, email, id: user.id };
 }
 
+function normalizeDurationLabel(raw = "1 Tháng"): string {
+  const cleaned = String(raw || "1 Tháng").replace(/\|/g, "-").trim().replace(/\s+/g, " ");
+  if (!cleaned) return "1 Tháng";
+  return cleaned
+    .split(" ")
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ""))
+    .join(" ");
+}
+
+function normalizeVariantKey(key = ""): string {
+  const [dur = "1 Tháng", type = "TK cấp sẵn"] = String(key || "").split("|");
+  return `${normalizeDurationLabel(dur)}|${String(type || "TK cấp sẵn").trim() || "TK cấp sẵn"}`;
+}
+
 function sanitizeProductPayload(raw: Record<string, unknown>, idOverride?: string) {
   const row: Record<string, unknown> = {};
   if (idOverride) row.id = idOverride;
@@ -35,7 +49,7 @@ function sanitizeProductPayload(raw: Record<string, unknown>, idOverride?: strin
     const cleanPrices: Record<string, number> = {};
     for (const [k, v] of Object.entries(raw.variant_prices as Record<string, unknown>)) {
       const p = Math.round(Number(v) || 0);
-      if (k.trim() && p >= 1000) cleanPrices[k.trim()] = p;
+      if (k.trim() && p >= 1000) cleanPrices[normalizeVariantKey(k)] = p;
     }
     row.variant_prices = cleanPrices;
     const vals = Object.values(cleanPrices);
@@ -139,7 +153,7 @@ serve(async (req) => {
 
     if (action === "update_variant_price") {
       const productId = String(payload.productId || "").trim();
-      const variantKey = String(payload.variantKey || "").trim();
+      const variantKey = normalizeVariantKey(String(payload.variantKey || ""));
       const nextPrice = Math.round(Number(payload.price) || 0);
       if (!productId || !variantKey || nextPrice < 1000) {
         return jsonRes({ ok: false, error: "Thiếu biến thể hoặc giá bán < 1.000đ." }, 400);
@@ -150,7 +164,12 @@ serve(async (req) => {
       );
       const curRows = curRes.ok ? await curRes.json() : [];
       const curMap = (Array.isArray(curRows) && curRows[0]?.variant_prices) || {};
-      const nextMap = { ...curMap, [variantKey]: nextPrice };
+      const nextMap: Record<string, number> = {};
+      for (const [k, v] of Object.entries(curMap as Record<string, unknown>)) {
+        const p = Math.round(Number(v) || 0);
+        if (p >= 1000) nextMap[normalizeVariantKey(k)] = p;
+      }
+      nextMap[variantKey] = nextPrice;
       const vals = Object.values(nextMap).map((v) => Number(v) || 0).filter((v) => v >= 1000);
       const patchBody: Record<string, unknown> = { variant_prices: nextMap };
       if (vals.length > 0) patchBody.price = Math.min(...vals);
@@ -202,7 +221,7 @@ serve(async (req) => {
       const productId = String(payload.productId || "").trim();
       if (!productId) return jsonRes({ ok: false, error: "Thiếu productId gói cần nạp kho" }, 400);
 
-      const duration = String(payload.duration || "1 Tháng").replace(/\|/g, "-").trim() || "1 Tháng";
+      const duration = normalizeDurationLabel(String(payload.duration || "1 Tháng"));
       const accountType = String(payload.accountType || "TK cấp sẵn").trim();
       const lines = Array.isArray(payload.lines) ? payload.lines : [];
       if (lines.length === 0) return jsonRes({ ok: false, error: "Danh sách key rỗng" }, 400);

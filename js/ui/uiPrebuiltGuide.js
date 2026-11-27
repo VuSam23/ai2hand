@@ -93,3 +93,21 @@ export function renderPrebuiltAccountGuideHtml({ compact = false, durationLabel 
     </details>
   `;
 }
+
+const SALE_HIGHLIGHT_REGEX =
+  /(\b\d+\s*(?:TB|GB)\b|Google\s+One|Google\s+AI\s+(?:Pro|Ultra)|Gemini(?:\s+Advanced|\s+Code\s+Assist|\s+CLI|\s+in\s+Chrome)?|Antigravity|Google\s+Flow|NotebookLM|Whisk|Veo\s*\d*|ChatGPT\s+Plus|Claude\s+Pro|1\s+đổi\s+1|24\/7|\b\d[\d.]*\s*tín\s*dụng\b)/gi;
+
+export function renderSaleDescriptionHtml(rawDesc = '') {
+  const clean = String(rawDesc || '').trim() || 'Tài khoản bản quyền chính hãng, bảo hành 1 đổi 1 trọn thời gian sử dụng.';
+  const parts = clean
+    .split(/\r?\n|(?:\.\s+)|(?:;\s+)|(?:•\s*)/)
+    .map((s) => s.replace(/^[-\s*•✓✔]+/, '').replace(/\.$/, '').trim())
+    .filter((s) => s.length >= 2);
+  const lines = parts.length > 0 ? parts : [clean];
+  return lines
+    .map((line) => {
+      const escaped = escapeHtml(line).replace(SALE_HIGHLIGHT_REGEX, '<strong class="sale-kw">$1</strong>');
+      return `<li class="sale-desc-item"><span class="sale-desc-check" aria-hidden="true">✓</span><span>${escaped}</span></li>`;
+    })
+    .join('');
+}

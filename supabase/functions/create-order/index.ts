@@ -37,6 +37,15 @@ async function verifyUser(authHeader: string) {
   return user?.id && user?.email ? { id: String(user.id), email: String(user.email) } : null;
 }
 
+function normalizeDurationLabel(raw = "1 Tháng"): string {
+  const cleaned = String(raw || "1 Tháng").replace(/\|/g, "-").trim().replace(/\s+/g, " ");
+  if (!cleaned) return "1 Tháng";
+  return cleaned
+    .split(" ")
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ""))
+    .join(" ");
+}
+
 function calcDiscount(promo: Record<string, unknown> | null, subTotal: number): number {
   if (!promo || subTotal <= 0) return 0;
   const val = Number(promo.discount_value) || 0;
@@ -67,7 +76,7 @@ serve(async (req) => {
     const body = await req.json();
     const productId = String(body.productId || "").trim();
     const qty = Math.max(1, Math.min(50, Math.round(Number(body.quantity) || 1)));
-    const duration = String(body.duration || "1 Tháng").trim();
+    const duration = normalizeDurationLabel(String(body.duration || "1 Tháng"));
     const accountType = String(body.accountType || "TK cấp sẵn").trim();
     const contact = String(body.contact || "").trim();
     const voucherCode = String(body.voucherCode || "").trim().toUpperCase();
@@ -88,14 +97,27 @@ serve(async (req) => {
     }
 
     const variantKey = `${duration}|${accountType}`;
-    const vp = product.variant_prices && typeof product.variant_prices === "object" ? product.variant_prices : {};
+    const vpRaw = product.variant_prices && typeof product.variant_prices === "object" ? product.variant_prices : {};
+    const vp: Record<string, number> = {};
+    for (const [k, v] of Object.entries(vpRaw as Record<string, unknown>)) {
+      const [d = "1 Tháng", t = "TK cấp sẵn"] = k.split("|");
+      const p = Number(v) || 0;
+      if (p >= 1000) vp[`${normalizeDurationLabel(d)}|${t.trim()}`] = p;
+    }
     const variantPrice = Number(vp[variantKey] || 0);
     const unitPrice = variantPrice >= 1000 ? variantPrice : Math.round(Number(product.price) || 0);
     if (unitPrice < 1000) {
       return jsonRes({ ok: false, error: "Biến thể sản phẩm chưa được cấu hình giá hợp lệ." }, 400);
     }
 
-    const manualMap = product.manual_stocks && typeof product.manual_stocks === "object" ? product.manual_stocks : {};
+    const manualRaw = product.manual_stocks && typeof product.manual_stocks === "object" ? product.manual_stocks : {};
+    const manualMap: Record<string, number> = {};
+    for (const [k, v] of Object.entries(manualRaw as Record<string, unknown>)) {
+      const [d = "1 Tháng", t = "TK cấp sẵn"] = k.split("|");
+      const q = Math.max(0, Math.round(Number(v) || 0));
+      const nk = `${normalizeDurationLabel(d)}|${t.trim()}`;
+      if (q > 0) manualMap[nk] = (manualMap[nk] || 0) + q;
+    }
     const manualStock = Math.max(0, Math.round(Number(manualMap[variantKey]) || 0));
     const isManual = manualStock > 0 || accountType === "Dùng chung" || accountType === "Nâng cấp chính chủ";
 
@@ -112,7 +134,7 @@ serve(async (req) => {
       const availStock = Array.isArray(keyRows)
         ? keyRows.filter(
             (k) =>
-              ((k.duration || "1 Tháng") === duration && (k.account_type || "TK cấp sẵn") === accountType) ||
+              (normalizeDurationLabel(k.duration || "1 Tháng") === duration && (k.account_type || "TK cấp sẵn") === accountType) ||
               k.duration == null ||
               k.account_type == null
           ).length

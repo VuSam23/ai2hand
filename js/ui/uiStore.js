@@ -2,8 +2,9 @@
  * js/ui/uiStore.js — Render Trang chủ (#view-home) & Chi tiết sản phẩm (#view-product-detail)
  */
 import { CATEGORIES, DURATION_VARIANTS, ACCOUNT_TYPES } from '../config/config.js';
-import { getVariantStock, isVariantManual } from '../services/supabaseApi.js';
+import { getVariantStock, getVariantPrice, isVariantManual, normalizeDurationLabel } from '../services/supabaseApi.js';
 import { formatVnd, escapeHtml } from './uiCommon.js';
+import { renderSaleDescriptionHtml } from './uiPrebuiltGuide.js';
 
 function renderEmblemHtml(product) {
   const emblem = escapeHtml(product?.emblem || 'ACC');
@@ -27,29 +28,31 @@ export function getProductDurations(product) {
     ...Object.keys(product?.variantStocks || {}),
     ...Object.keys(product?.manualStocks || {}),
   ];
-  const custom = allKeys.map((k) => k.split('|')[0]?.trim()).filter(Boolean);
-  const labels = [...new Set([...DURATION_VARIANTS.map((d) => d.label), ...custom])];
-  return labels.map((label) => DURATION_VARIANTS.find((d) => d.label === label) || { label, multiplier: 1 });
+  const custom = allKeys.map((k) => normalizeDurationLabel(k.split('|')[0])).filter(Boolean);
+  const labels = [...new Set([...DURATION_VARIANTS.map((d) => normalizeDurationLabel(d.label)), ...custom])];
+  return labels.map((label) => DURATION_VARIANTS.find((d) => normalizeDurationLabel(d.label) === label) || { label, multiplier: 1 });
 }
 
 export function getCheapestVariant(product) {
   const durationList = getProductDurations(product);
-  const allKeys = [
-    ...new Set([
-      ...Object.keys(product?.variantPrices || {}),
-      ...Object.keys(product?.variantStocks || {}),
-      ...Object.keys(product?.manualStocks || {}),
-    ]),
+  const rawKeys = [
+    ...Object.keys(product?.variantPrices || {}),
+    ...Object.keys(product?.variantStocks || {}),
+    ...Object.keys(product?.manualStocks || {}),
   ];
+  const allKeys = [...new Set(rawKeys.map((k) => {
+    const [d = '1 Tháng', t = ACCOUNT_TYPES[0].label] = k.split('|');
+    return `${normalizeDurationLabel(d)}|${t.trim()}`;
+  }))];
   const candidates = allKeys.map((key) => {
     const [label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label] = key.split('|');
-    const customPrice = Number(product?.variantPrices?.[key] || 0);
+    const customPrice = getVariantPrice(product, label, accountType);
     const price = customPrice >= 1000 ? customPrice : Number(product?.price) || 0;
     const stock = getVariantStock(product, label, accountType);
     const vIdx = Math.max(0, durationList.findIndex((d) => d.label === label));
     const tObj = ACCOUNT_TYPES.find((t) => t.label === accountType) || ACCOUNT_TYPES[0];
     const months = /tháng|thang/i.test(label) ? Math.max(1, Number.parseInt(label, 10) || 1) : 1;
-    const base1M = Number(product?.variantPrices?.[`1 Tháng|${tObj.label}`] || 0);
+    const base1M = getVariantPrice(product, '1 Tháng', tObj.label);
     const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
     return { label, accountType: tObj.label, accountTypeId: tObj.id, variantIndex: vIdx, price, strike, stock };
   });
@@ -111,14 +114,14 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
     activeType = ACCOUNT_TYPES.find((t) => getVariantStock(product, rawDurLabel, t.label) > 0) || activeType;
   }
   const typeMult = Number(activeType.multiplier) || 1;
-  const base1M = Number(product.variantPrices?.[`1 Tháng|${activeType.label}`]) || Math.round((product.price * typeMult) / 1000) * 1000;
+  const base1M = getVariantPrice(product, '1 Tháng', activeType.label) || Math.round((product.price * typeMult) / 1000) * 1000;
   const durStockOf = (lbl) => ACCOUNT_TYPES.reduce((s, t) => s + getVariantStock(product, lbl, t.label), 0);
   const variants = isLifetime
     ? [{ label: product.duration, multiplier: 1, price: Math.round((product.price * typeMult) / 1000) * 1000, strike: 0, stock: getVariantStock(product, product.duration, activeType.label), durStock: durStockOf(product.duration) }]
     : durationList.map((v) => {
-        const customPrice = Number(product.variantPrices?.[`${v.label}|${activeType.label}`]);
+        const customPrice = getVariantPrice(product, v.label, activeType.label);
         const fallbackType = ACCOUNT_TYPES.find((t) => getVariantStock(product, v.label, t.label) > 0);
-        const altPrice = fallbackType ? Number(product.variantPrices?.[`${v.label}|${fallbackType.label}`]) : 0;
+        const altPrice = fallbackType ? getVariantPrice(product, v.label, fallbackType.label) : 0;
         const price = customPrice >= 1000 ? customPrice : altPrice >= 1000 ? altPrice : Math.round((product.price * v.multiplier * typeMult) / 1000) * 1000;
         const months = /tháng|thang/i.test(v.label) ? Math.max(1, Number.parseInt(v.label, 10) || 1) : 1;
         const strike = months > 1 && base1M >= 1000 ? Math.round((base1M * months) / 1000) * 1000 : 0;
@@ -143,7 +146,7 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
   if (warEl) warEl.textContent = product.warranty || 'Bảo hành 1 đổi 1 trọn kỳ';
   document.getElementById('hero-category').textContent = product.category;
   document.getElementById('hero-title').textContent = product.name;
-  document.getElementById('hero-desc').textContent = product.description;
+  document.getElementById('hero-desc').innerHTML = renderSaleDescriptionHtml(product.description);
   document.getElementById('hero-duration').textContent = `${currentVariant.label} • ${activeType.label}`;
   const isUnpriced = currentVariant.price < 1000;
   document.getElementById('hero-price').textContent = isUnpriced ? 'Chưa mở bán' : formatVnd(currentVariant.price);
@@ -184,7 +187,7 @@ export function renderProductDetail(product, selectedVariantIndex = 0, selectedT
     typeWrap.innerHTML = availTypes.length > 0
       ? availTypes.map((t) => {
           const tStock = getVariantStock(product, currentVariant.label, t.label);
-          const customT = Number(product.variantPrices?.[`${currentVariant.label}|${t.label}`]);
+          const customT = getVariantPrice(product, currentVariant.label, t.label);
           const tPrice = customT >= 1000 ? customT : Math.round((product.price * (currentVariant.multiplier || 1) * (Number(t.multiplier) || 1)) / 1000) * 1000;
           return `
         <button type="button" class="account-type-btn ${t.id === activeType.id ? 'is-active' : ''}" data-type-id="${escapeHtml(t.id)}">

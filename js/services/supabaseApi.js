@@ -6,10 +6,10 @@ import { SUPABASE_CONFIG, isSupabaseConfigured, STORAGE_KEYS } from '../config/c
 import { readSession, isTokenExpiringSoon, refreshAccessToken } from './authRefresh.js';
 import { getTrafficSource } from './trafficSource.js';
 import { safeStorageGet, safeStorageSet } from './storage.js';
-import { addVariantCount, normalizeProduct, getVariantStock, isVariantManual, normalizeOrder } from './supabaseMappers.js';
+import { addVariantCount, normalizeProduct, getVariantStock, getVariantPrice, isVariantManual, normalizeDurationLabel, normalizeOrder } from './supabaseMappers.js';
 import * as mockApi from './mockApi.js';
 
-export { getVariantStock, isVariantManual };
+export { getVariantStock, getVariantPrice, isVariantManual, normalizeDurationLabel };
 
 let activePollTimer = null;
 const remotePendingOrders = new Map();

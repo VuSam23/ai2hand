@@ -122,7 +122,12 @@
 .stock-pill { font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.7rem; border-radius: var(--radius-full); background: var(--color-secondary-soft); color: var(--color-secondary); }
 .stock-pill.is-empty { background: #f1f5f9; color: #64748b; }
 .hero-title { margin: 0; font-size: 1.45rem; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; word-break: break-word; }
-.hero-desc { margin: 0; color: var(--color-ink-muted); font-size: 0.9375rem; overflow-wrap: anywhere; word-break: break-word; }
+.hero-desc-card { background: linear-gradient(145deg, #f8fafc 0%, #eff6ff 100%); border: 1px solid #dbeafe; border-radius: var(--radius-md); padding: 0.85rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.hero-desc-head { font-size: 0.78125rem; font-weight: 800; color: var(--color-primary); letter-spacing: 0.01em; display: flex; align-items: center; gap: 0.35rem; }
+.hero-desc, .sale-desc-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.4rem; color: var(--color-ink); font-size: 0.875rem; line-height: 1.45; overflow-wrap: anywhere; word-break: break-word; }
+.sale-desc-item { display: flex; align-items: flex-start; gap: 0.5rem; }
+.sale-desc-check { width: 1.15rem; height: 1.15rem; border-radius: var(--radius-full); background: var(--color-secondary-soft); color: var(--color-secondary); font-size: 0.72rem; font-weight: 800; display: inline-grid; place-items: center; flex-shrink: 0; margin-top: 0.1rem; }
+.sale-kw { color: var(--color-primary); font-weight: 800; }
 .price-box { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem; padding: 0.875rem 1rem; background: var(--color-surface-low); border-radius: var(--radius-md); }
 .price-current { font-size: 1.75rem; font-weight: 800; color: var(--color-primary); font-variant-numeric: tabular-nums; }
 .price-old { font-size: 1rem; color: var(--color-ink-subtle); }

@@ -1,3 +1,17 @@
+function normalizeDurationLabel(raw = "1 Tháng"): string {
+  const cleaned = String(raw || "1 Tháng").replace(/\|/g, "-").trim().replace(/\s+/g, " ");
+  if (!cleaned) return "1 Tháng";
+  return cleaned
+    .split(" ")
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ""))
+    .join(" ");
+}
+
+function normalizeVariantKey(key = ""): string {
+  const [dur = "1 Tháng", type = "TK cấp sẵn"] = String(key || "").split("|");
+  return `${normalizeDurationLabel(dur)}|${String(type || "TK cấp sẵn").trim() || "TK cấp sẵn"}`;
+}
+
 export async function handleManualAction(
   action: string,
   payload: Record<string, unknown>,
@@ -7,7 +21,8 @@ export async function handleManualAction(
 ): Promise<Response | null> {
   if (action === "update_manual_stock") {
     const productId = String(payload.productId || "").trim();
-    const variantKey = String(payload.variantKey || "").trim();
+    const rawVariantKey = String(payload.variantKey || "").trim();
+    const variantKey = rawVariantKey ? normalizeVariantKey(rawVariantKey) : "";
     const manualStock = Math.max(0, Math.round(Number(payload.manualStock) || 0));
     const nextPrice = Math.round(Number(payload.price) || 0);
     if (!productId || !variantKey) {
@@ -22,13 +37,23 @@ export async function handleManualAction(
     const curManual = (Array.isArray(curRows) && curRows[0]?.manual_stocks) || {};
     const curPrices = (Array.isArray(curRows) && curRows[0]?.variant_prices) || {};
 
-    const nextManual: Record<string, number> = { ...curManual };
+    const nextManual: Record<string, number> = {};
+    for (const [k, v] of Object.entries(curManual as Record<string, unknown>)) {
+      const q = Math.max(0, Math.round(Number(v) || 0));
+      const nk = normalizeVariantKey(k);
+      if (q > 0) nextManual[nk] = (nextManual[nk] || 0) + q;
+    }
     if (manualStock > 0) nextManual[variantKey] = manualStock;
     else delete nextManual[variantKey];
 
     const patchBody: Record<string, unknown> = { manual_stocks: nextManual };
     if (nextPrice >= 1000) {
-      const nextPrices = { ...curPrices, [variantKey]: nextPrice };
+      const nextPrices: Record<string, number> = {};
+      for (const [k, v] of Object.entries(curPrices as Record<string, unknown>)) {
+        const p = Math.round(Number(v) || 0);
+        if (p >= 1000) nextPrices[normalizeVariantKey(k)] = p;
+      }
+      nextPrices[variantKey] = nextPrice;
       const vals = Object.values(nextPrices).map((v) => Number(v) || 0).filter((v) => v >= 1000);
       patchBody.variant_prices = nextPrices;
       if (vals.length > 0) patchBody.price = Math.min(...vals);

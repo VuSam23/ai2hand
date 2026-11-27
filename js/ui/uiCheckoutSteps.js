@@ -2,7 +2,7 @@
  * js/ui/uiCheckoutSteps.js — Tầng 3: Render trạng thái Modal VietQR 3 bước & Đếm ngược
  */
 import { VIETQR_CONFIG, ACCOUNT_TYPES, isSupabaseConfigured } from '../config/config.js';
-import { stopOrderPolling, getVariantStock, isVariantManual } from '../services/supabaseApi.js';
+import { stopOrderPolling, getVariantStock, getVariantPrice, isVariantManual, normalizeDurationLabel } from '../services/supabaseApi.js';
 import { readSession } from '../services/authRefresh.js';
 import { calculatePromoDiscount } from '../services/promoApi.js';
 import { formatVnd, escapeHtml, showToast } from './uiCommon.js';
@@ -10,9 +10,10 @@ import { isPrebuiltAccountOrder, renderPrebuiltAccountGuideHtml } from './uiPreb
 
 let qrTimerInterval = null;
 
-export function resolveCheckoutVariant(product, label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label) {
+export function resolveCheckoutVariant(product, rawLabel = '1 Tháng', accountType = ACCOUNT_TYPES[0].label) {
+  const label = normalizeDurationLabel(rawLabel);
   const key = `${label}|${accountType}`;
-  const customPrice = Number(product?.variantPrices?.[key] || 0);
+  const customPrice = getVariantPrice(product, label, accountType);
   const price = customPrice >= 1000 ? customPrice : Number(product?.price) || 0;
   const stock = getVariantStock(product, label, accountType);
   const isManual = isVariantManual(product, label, accountType);
@@ -20,8 +21,12 @@ export function resolveCheckoutVariant(product, label = '1 Tháng', accountType 
 }
 
 function buildCheckoutVariants(product) {
-  const allKeys = [...new Set([...Object.keys(product?.variantPrices || {}), ...Object.keys(product?.variantStocks || {}), ...Object.keys(product?.manualStocks || {})])];
-  const keys = allKeys.length > 0 ? allKeys : [`${product?.duration || '1 Tháng'}|${ACCOUNT_TYPES[0].label}`];
+  const rawKeys = [...Object.keys(product?.variantPrices || {}), ...Object.keys(product?.variantStocks || {}), ...Object.keys(product?.manualStocks || {})];
+  const allKeys = [...new Set(rawKeys.map((k) => {
+    const [d = '1 Tháng', t = ACCOUNT_TYPES[0].label] = k.split('|');
+    return `${normalizeDurationLabel(d)}|${t.trim()}`;
+  }))];
+  const keys = allKeys.length > 0 ? allKeys : [`${normalizeDurationLabel(product?.duration || '1 Tháng')}|${ACCOUNT_TYPES[0].label}`];
   return keys.map((key) => {
     const [label = '1 Tháng', accountType = ACCOUNT_TYPES[0].label] = key.split('|');
     return resolveCheckoutVariant(product, label, accountType);

@@ -150,15 +150,33 @@ test('5. Bien the ton kho, Cap thu cong, Promo va Cheapest Variant', () => {
   assert.equal(mappers.isVariantManual(prod, '7 ngày', 'TK cấp sẵn'), false);
 
   const durations = uiStore.getProductDurations(prod).map((d) => d.label);
-  assert.equal(durations.includes('7 ngày'), true);
+  assert.equal(durations.includes('7 Ngày'), true);
   assert.equal(durations.includes('18 Tháng'), true);
 
   const cheapest = uiStore.getCheapestVariant(prod);
-  assert.equal(cheapest.label, '7 ngày');
+  assert.equal(cheapest.label, '7 Ngày');
   assert.equal(cheapest.accountType, 'TK cấp sẵn');
   assert.equal(cheapest.price, 29000);
   assert.equal(cheapest.stock, 3);
   assert.equal(cheapest.strike, 0);
+
+  // Kiểm tra gộp cộng dồn SL không phân biệt hoa/thường ('18 Tháng' + '18 tháng' = 2)
+  const stockMap = new Map();
+  mappers.addVariantCount(stockMap, 'gemini-ultra', '18 Tháng', 'TK cấp sẵn', 1);
+  mappers.addVariantCount(stockMap, 'gemini-ultra', '18 tháng', 'TK cấp sẵn', 1);
+  const mergedProd = mappers.normalizeProduct(
+    {
+      id: 'gemini-ultra',
+      name: 'Gemini Ultra',
+      price: 250000,
+      variant_prices: { '18 tháng|TK cấp sẵn': 350000 },
+    },
+    stockMap
+  );
+  assert.equal(mappers.getVariantStock(mergedProd, '18 Tháng', 'TK cấp sẵn'), 2);
+  assert.equal(mappers.getVariantStock(mergedProd, '18 tháng', 'TK cấp sẵn'), 2);
+  const mergedDurations = uiStore.getProductDurations(mergedProd).filter((d) => d.label.toLowerCase() === '18 tháng');
+  assert.equal(mergedDurations.length, 1);
 
   assert.equal(promoApi.calculatePromoDiscount({ discountType: 'percent', discountValue: 20 }, 100000), 20000);
   assert.equal(promoApi.calculatePromoDiscount({ discountType: 'fixed', discountValue: 150000 }, 100000), 100000);
