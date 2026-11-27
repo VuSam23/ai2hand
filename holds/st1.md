@@ -33,7 +33,7 @@ DELETE FROM public.orders WHERE order_code LIKE 'ACC%';
 DELETE FROM public.inventory_keys WHERE account_data LIKE 'test@%';
 Khóa tên miền chính thức:
 
-Vào Supabase Dashboard → Authentication → URL Configuration, đặt Site URL và Redirect URLs về đúng tên miền chính thức ([https://ai2hand.vn](https://ai2hand.vn)).
+Vào Supabase Dashboard → Authentication → URL Configuration, đặt Site URL và Redirect URLs về đúng tên miền chính thức ([https://ai2hand.id.vn](https://ai2hand.id.vn)).
 
 Vào Supabase Edge Functions → Secrets, kiểm tra biến ALLOWED_ORIGINS chỉ chứa tên miền chính thức (gỡ bỏ localhost nếu không cần thiết).
 

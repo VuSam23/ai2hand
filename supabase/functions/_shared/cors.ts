@@ -1,4 +1,4 @@
-const DEFAULT_ORIGINS = "https://ai2hand.vn,https://www.ai2hand.vn";
+const DEFAULT_ORIGINS = "https://ai2hand.id.vn,https://www.ai2hand.id.vn";
 
 export function getAllowedOrigins(): string[] {
   const raw = Deno.env.get("ALLOWED_ORIGINS") || DEFAULT_ORIGINS;
@@ -14,7 +14,7 @@ export function resolveAllowedOrigin(req: Request): string {
   if (origin && allowed.includes(origin.toLowerCase())) {
     return origin;
   }
-  return allowed[0] || "https://ai2hand.vn";
+  return allowed[0] || "https://ai2hand.id.vn";
 }
 
 export function isOriginAllowed(req: Request): boolean {

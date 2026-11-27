@@ -136,7 +136,7 @@ export async function confirmPaymentAndDeliver(orderCode) {
     } else {
       const suffix = Math.floor(1000 + Math.random() * 9000);
       deliveredCredentials.push(
-        `${order.productId}.${order.orderCode.toLowerCase()}.${suffix}@ai2hand.vn|Pass#${suffix}Vip`
+        `${order.productId}.${order.orderCode.toLowerCase()}.${suffix}@ai2hand.id.vn|Pass#${suffix}Vip`
       );
     }
   }

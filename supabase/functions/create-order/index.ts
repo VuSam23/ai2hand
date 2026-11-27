@@ -7,8 +7,8 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const PAYOS_CLIENT_ID = Deno.env.get("PAYOS_CLIENT_ID") ?? "";
 const PAYOS_API_KEY = Deno.env.get("PAYOS_API_KEY") ?? "";
 const PAYOS_CHECKSUM_KEY = Deno.env.get("PAYOS_CHECKSUM_KEY") ?? "";
-const PAYOS_RETURN_URL = Deno.env.get("PAYOS_RETURN_URL") ?? "https://ai2hand.vn";
-const PAYOS_CANCEL_URL = Deno.env.get("PAYOS_CANCEL_URL") ?? "https://ai2hand.vn";
+const PAYOS_RETURN_URL = Deno.env.get("PAYOS_RETURN_URL") ?? "https://ai2hand.id.vn";
+const PAYOS_CANCEL_URL = Deno.env.get("PAYOS_CANCEL_URL") ?? "https://ai2hand.id.vn";
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function generateOrderCode(): string {
