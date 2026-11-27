@@ -14,6 +14,9 @@ if (typeof document !== 'undefined') {
       if (target.classList.contains('product-logo-img')) {
         target.hidden = true;
         if (target.nextElementSibling) target.nextElementSibling.hidden = false;
+      } else if (target.classList.contains('card-cover-img')) {
+        target.hidden = true;
+        if (target.nextElementSibling) target.nextElementSibling.hidden = false;
       } else if (target.classList.contains('product-detail-banner-img')) {
         target.closest('#hero-emblem')?.classList.remove('is-detail-banner');
         target.hidden = true;
@@ -29,6 +32,13 @@ export function renderEmblemHtml(product) {
   const url = String(product?.imageUrl || '').trim();
   if (!/^https?:\/\//i.test(url)) return emblem;
   return `<img class="product-logo-img" src="${escapeHtml(url)}" alt="${escapeHtml(product?.name || 'Logo')}" loading="lazy" /><span hidden>${emblem}</span>`;
+}
+
+export function renderCardCoverHtml(product, stockLabel, stockClass) {
+  const url = String(product?.detailImageUrl || product?.imageUrl || '').trim();
+  if (!/^https?:\/\//i.test(url)) return '';
+  const emblem = escapeHtml(product?.emblem || 'ACC');
+  return `<div class="card-cover"><img class="card-cover-img" src="${escapeHtml(url)}" alt="${escapeHtml(product?.name || 'Banner')}" loading="lazy" /><span class="card-cover-fallback" hidden>${emblem}</span><span class="card-stock card-cover-stock ${stockClass}">${stockLabel}</span></div>`;
 }
 
 export function renderDetailMediaHtml(product, emblemEl) {

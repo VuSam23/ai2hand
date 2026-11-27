@@ -5,7 +5,7 @@ import { CATEGORIES, DURATION_VARIANTS, ACCOUNT_TYPES } from '../config/config.j
 import { getVariantStock, getVariantPrice, isVariantManual } from '../services/supabaseApi.js';
 import { formatVnd, escapeHtml } from './uiCommon.js';
 import { renderSaleDescriptionHtml } from './uiPrebuiltGuide.js';
-import { renderEmblemHtml, renderDetailMediaHtml, getProductDurations, getCheapestVariant } from './uiStoreVariants.js';
+import { renderEmblemHtml, renderCardCoverHtml, renderDetailMediaHtml, getProductDurations, getCheapestVariant } from './uiStoreVariants.js';
 
 export { getProductDurations, getCheapestVariant };
 
@@ -186,14 +186,16 @@ export function renderProductGrid(products) {
       const isEmpty = displayStock === 0;
       const isLow = displayStock > 0 && displayStock <= 5;
       const stockClass = isEmpty ? 'is-empty' : isLow ? 'is-low' : '';
-      const stockLabel = isEmpty ? 'Hết hàng' : `Còn ${displayStock} tài khoản`;
+      const stockLabel = isEmpty ? 'Hết hàng' : `Còn ${displayStock}<span class="card-stock-unit"> tài khoản</span>`;
+      const coverHtml = renderCardCoverHtml(item, stockLabel, stockClass);
       const hasPrice = cheapest.price >= 1000;
       const hasDiscount = hasPrice && Number(cheapest.strike) > cheapest.price;
       const priceLabel = hasPrice ? formatVnd(cheapest.price) : 'Chưa mở bán';
       const discountPct = hasDiscount ? Math.round((1 - cheapest.price / cheapest.strike) * 100) : 0;
 
       return `
-        <article class="product-card ${isEmpty ? 'is-out-of-stock' : ''}" data-product-id="${escapeHtml(item.id)}">
+        <article class="product-card ${isEmpty ? 'is-out-of-stock' : ''} ${coverHtml ? 'has-cover' : ''}" data-product-id="${escapeHtml(item.id)}">
+          ${coverHtml}
           <div class="card-head">
             <span class="card-cat">${escapeHtml(item.category)}</span>
             <span class="card-stock ${stockClass}">${stockLabel}</span>
