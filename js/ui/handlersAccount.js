@@ -71,6 +71,16 @@ export function bindAccountAndAdminEvents({ state, startCheckout, openProductDet
   document.getElementById('account-orders-tbody')?.addEventListener('click', async (e) => {
     const copyBtn = e.target.closest('[data-copy-raw]');
     if (copyBtn) return copyText(copyBtn.dataset.copyRaw, 'tài khoản', copyBtn);
+    const maskBtn = e.target.closest('[data-action="toggle-cred-mask"]');
+    if (maskBtn) {
+      const codeEl = maskBtn.closest('.acc-cred-pill')?.querySelector('code[data-raw]');
+      if (!codeEl) return;
+      const nextMask = codeEl.dataset.masked !== 'true';
+      codeEl.dataset.masked = String(nextMask);
+      codeEl.textContent = nextMask ? codeEl.dataset.mask : codeEl.dataset.raw;
+      maskBtn.innerHTML = `<span>${nextMask ? '👁️ Hiện' : '🙈 Ẩn'}</span>`;
+      return;
+    }
     const guideBtn = e.target.closest('[data-action="open-prebuilt-guide"]');
     if (guideBtn) return openPrebuiltGuideModal(guideBtn.dataset.duration || '');
     const buyAgainBtn = e.target.closest('[data-action="buy-again"]');

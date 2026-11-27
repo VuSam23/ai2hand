@@ -86,6 +86,22 @@ serve(async (req) => {
       return jsonRes({ ok: false, error: "Thiếu thông tin gói sản phẩm hoặc liên hệ." }, 400);
     }
 
+    const sinceIso = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const pendingRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?user_id=eq.${encodeURIComponent(user.id)}&status=eq.pending&created_at=gte.${encodeURIComponent(sinceIso)}&select=order_code&limit=3`,
+      { headers: svcHeaders }
+    );
+    const pendingRows = pendingRes.ok ? await pendingRes.json().catch(() => []) : [];
+    if (Array.isArray(pendingRows) && pendingRows.length >= 3) {
+      return jsonRes(
+        {
+          ok: false,
+          error: "Bạn đang có 3 đơn hàng chưa thanh toán. Vui lòng hoàn tất hoặc đợi 15 phút trước khi tạo đơn mới.",
+        },
+        429
+      );
+    }
+
     const prodRes = await fetch(
       `${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(productId)}&select=*&limit=1`,
       { headers: svcHeaders }

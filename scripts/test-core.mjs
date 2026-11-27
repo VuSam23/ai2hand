@@ -228,4 +228,12 @@ test('5. Bien the ton kho, Cap thu cong, Promo va Cheapest Variant', () => {
     status: 'pending_manual',
   });
   assert.equal(prebuiltGuide.isPrebuiltAccountOrder(manualPending), false);
+  assert.equal(
+    prebuiltGuide.maskCredentialText('user@gmail.com|Secret123|2FA999'),
+    'user@gmail.com|••••••••|••••••'
+  );
+  assert.equal(
+    prebuiltGuide.maskCredentialText('Đã kích hoạt chính chủ qua Email'),
+    'Đã kích hoạt chính chủ qua Email'
+  );
 });

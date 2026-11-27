@@ -4,6 +4,18 @@
 import { PREBUILT_2FA_VIDEO_URL } from '../config/config.js';
 import { escapeHtml } from './uiCommon.js';
 
+export function maskCredentialText(rawText = '') {
+  return String(rawText || '')
+    .split(/\r?\n/)
+    .map((line) => {
+      const trimmed = line.trim();
+      if (!trimmed.includes('|')) return trimmed;
+      const parts = trimmed.split('|');
+      return [parts[0], ...parts.slice(1).map((_, idx) => (idx === 0 ? '••••••••' : '••••••'))].join('|');
+    })
+    .join('\n');
+}
+
 export function isPrebuiltAccountOrder(order) {
   if (!order) return false;
   const st = String(order.status || '').toUpperCase();

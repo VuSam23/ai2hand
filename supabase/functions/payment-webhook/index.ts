@@ -14,6 +14,14 @@ function formatVnd(amount: number): string {
   return `${Math.round(Number(amount) || 0).toLocaleString("vi-VN")}đ`;
 }
 
+function sanitizeTelegramText(raw: unknown, maxLen = 180): string {
+  return String(raw ?? "")
+    .replace(/[\r\n\t]+/g, " ")
+    .replace(/[<>&*_`\[\]]/g, "")
+    .trim()
+    .slice(0, maxLen) || "Không rõ";
+}
+
 async function sendTelegramAlert(text: string): Promise<void> {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
   const controller = new AbortController();
@@ -95,21 +103,27 @@ serve(async (req) => {
         return jsonRes({ ok: false, error: await manualRes.text() }, 500);
       }
       const newlyMarked = await manualRes.json().catch(() => false);
+      const safeCode = sanitizeTelegramText(order.order_code, 40);
+      const safeProd = sanitizeTelegramText(order.product_name || order.product_id, 120);
+      const safeDur = sanitizeTelegramText(order.duration || "1 Tháng", 40);
+      const safeType = sanitizeTelegramText(order.account_type || "TK cấp sẵn", 50);
+      const safeSrc = sanitizeTelegramText(order.traffic_source || "Direct", 64);
+      const safeContact = sanitizeTelegramText(order.contact, 120);
       if (newlyMarked === true) {
         const isShared = String(order.account_type || "").toLowerCase().includes("dùng chung");
         const headerTitle = isShared
           ? "[ĐƠN DÙNG CHUNG (ADD FAMILY) - ĐÃ THANH TOÁN]"
           : "[ĐƠN CẤP THỦ CÔNG - ĐÃ THANH TOÁN]";
         const contactLine = isShared
-          ? `Gmail khách cần add vào Family: ${order.contact || "Không rõ"}`
-          : `Email / Zalo khách nhận: ${order.contact || "Không rõ"}`;
+          ? `Gmail khách cần add vào Family: ${safeContact}`
+          : `Email / Zalo khách nhận: ${safeContact}`;
         await sendTelegramAlert(
           `${headerTitle}\n` +
-            `Mã đơn: #${order.order_code}\n` +
-            `Sản phẩm: ${order.product_name || order.product_id}\n` +
-            `Biến thể: ${order.duration || "1 Tháng"} • ${order.account_type || "TK cấp sẵn"} (x${order.quantity || 1})\n` +
+            `Mã đơn: #${safeCode}\n` +
+            `Sản phẩm: ${safeProd}\n` +
+            `Biến thể: ${safeDur} • ${safeType} (x${order.quantity || 1})\n` +
             `Đã nhận: ${formatVnd(amount)}\n` +
-            `Nguồn: ${order.traffic_source || "Direct"}\n` +
+            `Nguồn: ${safeSrc}\n` +
             contactLine
         );
       }
@@ -117,6 +131,13 @@ serve(async (req) => {
     }
 
     // 5. Rút key tự động & hoàn tất đơn hàng
+    const safeCode = sanitizeTelegramText(order.order_code, 40);
+    const safeProd = sanitizeTelegramText(order.product_name || order.product_id, 120);
+    const safeDur = sanitizeTelegramText(order.duration || "1 Tháng", 40);
+    const safeType = sanitizeTelegramText(order.account_type || "TK cấp sẵn", 50);
+    const safeSrc = sanitizeTelegramText(order.traffic_source || "Direct", 64);
+    const safeContact = sanitizeTelegramText(order.contact, 120);
+
     const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fulfill_order`, {
       method: "POST",
       headers,
@@ -124,7 +145,7 @@ serve(async (req) => {
     });
 
     if (!rpcRes.ok) {
-      const errText = await rpcRes.text();
+      const errText = sanitizeTelegramText(await rpcRes.text(), 220);
       const markRes = await fetch(
         `${SUPABASE_URL}/rest/v1/orders?order_code=eq.${encodeURIComponent(String(order.order_code))}&status=eq.pending`,
         {
@@ -137,10 +158,10 @@ serve(async (req) => {
       if (Array.isArray(markedRows) && markedRows.length > 0) {
         await sendTelegramAlert(
           `[KHẨN CẤP - LỖI CẤP KEY]\n` +
-            `Mã đơn: #${order.order_code}\n` +
-            `Sản phẩm: ${order.product_name || order.product_id}\n` +
+            `Mã đơn: #${safeCode}\n` +
+            `Sản phẩm: ${safeProd}\n` +
             `Khách đã chuyển: ${formatVnd(amount)}\n` +
-            `Liên hệ: ${order.contact || "Không rõ"}\n` +
+            `Liên hệ: ${safeContact}\n` +
             `Trạng thái đã chuyển: pending_manual\n` +
             `Chi tiết lỗi: ${errText}`
         );
@@ -151,12 +172,12 @@ serve(async (req) => {
     const credential = await rpcRes.json();
     await sendTelegramAlert(
       `[ĐƠN HÀNG MỚI THÀNH CÔNG]\n` +
-        `Mã đơn: #${order.order_code}\n` +
-        `Sản phẩm: ${order.product_name || order.product_id}\n` +
-        `Biến thể: ${order.duration || "1 Tháng"} • ${order.account_type || "TK cấp sẵn"} (x${order.quantity || 1})\n` +
+        `Mã đơn: #${safeCode}\n` +
+        `Sản phẩm: ${safeProd}\n` +
+        `Biến thể: ${safeDur} • ${safeType} (x${order.quantity || 1})\n` +
         `Đã nhận: ${formatVnd(amount)}\n` +
-        `Nguồn: ${order.traffic_source || "Direct"}\n` +
-        `Khách nhận: ${order.contact || "Không rõ"}`
+        `Nguồn: ${safeSrc}\n` +
+        `Khách nhận: ${safeContact}`
     );
     return jsonRes({ success: true, orderCode: order.order_code, delivered: Boolean(credential) }, 200);
   } catch (err) {

@@ -3,7 +3,7 @@
  */
 import { getAdminSession, isAdminLoggedIn, isUserLoggedIn } from '../services/adminApi.js';
 import { formatVnd, escapeHtml, formatDateTime, getInitials } from './uiCommon.js';
-import { isPrebuiltAccountOrder, renderPrebuiltAccountGuideHtml } from './uiPrebuiltGuide.js';
+import { isPrebuiltAccountOrder, renderPrebuiltAccountGuideHtml, maskCredentialText } from './uiPrebuiltGuide.js';
 
 export function syncAuthNavUi() {
   const isAdmin = isAdminLoggedIn();
@@ -121,14 +121,22 @@ export function renderAccountView(profile, orders = [], defaultTab = 'overview')
       const guideHtml = showPrebuiltGuide
         ? renderPrebuiltAccountGuideHtml({ compact: true, durationLabel: order.duration || '' })
         : '';
+      const hasMask = credText.includes('|');
+      const maskedText = hasMask ? maskCredentialText(credText) : credText;
+      const toggleMaskBtn = hasMask
+        ? `<button type="button" class="copy-btn" data-action="toggle-cred-mask" title="Hiện hoặc ẩn mật khẩu"><span>👁️ Hiện</span></button>`
+        : '';
       const credCell = isManual
         ? `<div class="acc-order-sub">Đã nhận tiền • Liên hệ <a href="https://zalo.me/0373786203" target="_blank" rel="noopener noreferrer">Zalo 0373786203</a> / <a href="https://t.me/Acc2Hand" target="_blank" rel="noopener noreferrer">Telegram @Acc2Hand</a> kèm mã <strong>#${escapeHtml(order.orderCode)}</strong> để kích hoạt ngay.</div>`
         : `<div class="acc-cred-pill">
-              <code>${escapeHtml(credText)}</code>
-              <button type="button" class="copy-btn" data-copy-raw="${escapeHtml(credText)}" title="Sao chép tài khoản">
-                <svg class="icon" aria-hidden="true"><use href="#icon-copy" /></svg>
-                <span>Copy</span>
-              </button>
+              <code data-masked="${hasMask ? 'true' : 'false'}" data-raw="${escapeHtml(credText)}" data-mask="${escapeHtml(maskedText)}">${escapeHtml(maskedText)}</code>
+              <div style="display:flex;align-items:center;gap:0.35rem;flex-shrink:0;">
+                ${toggleMaskBtn}
+                <button type="button" class="copy-btn" data-copy-raw="${escapeHtml(credText)}" title="Sao chép tài khoản">
+                  <svg class="icon" aria-hidden="true"><use href="#icon-copy" /></svg>
+                  <span>Copy</span>
+                </button>
+              </div>
             </div>${guideHtml}`;
       return `
         <tr>
